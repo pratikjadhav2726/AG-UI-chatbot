@@ -104,6 +104,7 @@ export default function ChatPage() {
     try {
       // Check for tool_code format
       const toolCodeMatch = content.match(/```tool_code\s*([\s\S]*?)\s*```/)
+      console.log("Tool code match:", toolCodeMatch)
       if (toolCodeMatch && toolCodeMatch[1]) {
         return parseToolCode(toolCodeMatch[1])
       }
@@ -193,7 +194,7 @@ export default function ChatPage() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="border-b">
         <div className="container py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Mock UI Templates Demo</h1>
+          <h1 className="text-2xl font-bold">Gen UI Templates Demo</h1>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={toggleRawResponse}>
               {showRawResponse ? "Hide Raw Responses" : "Show Raw Responses"}
@@ -218,7 +219,7 @@ export default function ChatPage() {
           </Alert>
         )}
 
-        {/* Info Panel */}
+        {/* Info Panel
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
           <h2 className="text-lg font-medium mb-2">Mock UI Templates Demo</h2>
           <p className="text-sm mb-2">
@@ -226,7 +227,7 @@ export default function ChatPage() {
             responses alternate between normal text messages and tool calls that display UI components.
           </p>
           <p className="text-sm">Try sending any message to see the next response in the sequence.</p>
-        </div>
+        </div> */}
 
         {/* Debug Panel */}
         {debugMode && (
@@ -241,7 +242,12 @@ export default function ChatPage() {
 
         <ScrollArea className="h-[calc(100vh-20rem)]">
           <div className="space-y-4 pb-24">
-            {messages.map((message, index) => (
+            {messages
+  // remove any assistant messages that contain a tool_code block
+  .filter(
+    (m) =>
+      !(m.role === "assistant" && m.content.includes("```tool_code"))
+  ).map((message, index) => (
               <Card
                 key={`${message.id}-${index}`}
                 className={cn(

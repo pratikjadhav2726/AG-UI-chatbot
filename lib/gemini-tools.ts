@@ -48,132 +48,29 @@ export function parseGeminiResponse(content: string) {
 // Parse tool_code format from Gemini
 export function parseToolCode(toolCode: string) {
   try {
-    console.log("Parsing tool code:", toolCode)
+    // 1. Find the opening "(" and the matching ")"
+    const start = toolCode.indexOf("(")
+    const end = toolCode.lastIndexOf(")")
+    if (start === -1 || end === -1) throw new Error("Malformed tool_code")
 
-    // Extract function name and arguments
-    const functionMatch = toolCode.match(/(\w+)\(([\s\S]*)\)/)
-    if (!functionMatch) {
-      console.error("Invalid tool_code format:", toolCode)
-      return null
-    }
+    // 2. Extract just the args: "a=1, b=[...], c='hello'" etc
+    const argString = toolCode.slice(start + 1, end).trim()
 
-    const functionName = functionMatch[1]
-    const argsString = functionMatch[2]
+    // 3. Build a JSON‑like object literal string
+    let jsonLike = `{${argString}}`
+      // quote unquoted keys: foo= → "foo":
+      .replace(/(\w+)\s*=/g, '"$1":')
+      // single → double quotes, but avoid double-encoding existing double quotes
+      .replace(/'([^"']*)'/g, '"$1"')
+      // Python → JS literals
+      .replace(/\bTrue\b/g, "true")
+      .replace(/\bFalse\b/g, "false")
+      .replace(/\bNone\b/g, "null")
 
-    console.log("Function name:", functionName)
-    console.log("Args string:", argsString)
-
-    // Only process generateDynamicUI function calls
-    if (functionName !== "generateDynamicUI") {
-      console.error("Unexpected function in tool_code:", functionName)
-      return null
-    }
-
-    // Parse the arguments
-    const config: Record<string, any> = {}
-
-    // Handle named parameters with regex
-    // This regex matches parameter names followed by values that can be:
-    // - Quoted strings (single or double quotes)
-    // - Arrays [...]
-    // - Objects {...}
-    // - Other values without commas
-    const namedParamRegex = /(\w+)=(?:'([^']*)'|"([^"]*)"|([[{][\s\S]*?[\]}])|([^,)]+))/g
-    let match
-
-    while ((match = namedParamRegex.exec(argsString)) !== null) {
-      const paramName = match[1]
-      // Get the value from whichever capturing group matched
-      const paramValue = match[2] || match[3] || match[4] || match[5]
-
-      console.debug(`Param ${paramName}:`, paramValue)
-
-      try {
-        // Try to parse as JSON if it looks like an object or array
-        if (paramValue.startsWith("[") || paramValue.startsWith("{")) {
-          // Replace Python syntax with JavaScript syntax
-          console.debug("Parsing as JSON:", paramValue)
-          const jsValue = paramValue
-            .replace(/'/g, '"')
-            .replace(/True/g, "true")
-            .replace(/False/g, "false")
-            .replace(/None/g, "null")
-
-          config[paramName] = JSON.parse(jsValue)
-        } else {
-          // Otherwise use the string value
-          config[paramName] = paramValue
-        }
-      } catch (e) {
-        console.error("Error parsing parameter value:", e)
-        // If JSON parsing fails, use the raw string
-        config[paramName] = paramValue
-      }
-    }
-
-    console.log("Parsed config:", config)
-
-    // Convert sections to the format expected by our templates
-    if (config.sections) {
-      // Map the sections to the format our templates expect
-      const adaptedConfig = {
-        templateType: config.templateType || "dashboard",
-        title: config.title || "Dashboard",
-        description: config.description || "",
-        metrics: [] as Array<{
-          id: string
-          label: any
-          value: any
-          change: number
-          changeType: string
-        }>,
-        charts: [] as Array<{
-          id: string
-          type: any
-          title: any
-          data: any
-          height: number
-        }>,
-        recentActivity: [],
-      }
-
-      console.log("Processing sections:", config.sections)
-
-      // Process sections to extract metrics, charts, etc.
-      config.sections.forEach((section: any) => {
-        if (section.components) {
-          section.components.forEach((component: any) => {
-            if (component.type === "stat") {
-              adaptedConfig.metrics.push({
-                id: `metric-${adaptedConfig.metrics.length}`,
-                label: component.title,
-                value: component.value,
-                change: Number.parseFloat(component.percentageChange?.replace("%", "") || "0"),
-                changeType: component.trend === "up" ? "increase" : "decrease",
-              })
-            } else if (component.type === "chart") {
-              adaptedConfig.charts.push({
-                id: `chart-${adaptedConfig.charts.length}`,
-                type: component.chartType,
-                title: component.options?.title || "Chart",
-                data: component.data,
-                height: 200,
-              })
-            } else if (component.type === "dataTable") {
-              // Handle data tables
-              // This is just an example - adapt to your needs
-            }
-          })
-        }
-      })
-
-      console.log("Adapted config:", adaptedConfig)
-      return adaptedConfig
-    }
-
-    return config
-  } catch (error) {
-    console.error("Error parsing tool_code:", error, toolCode)
+    // 4. Parse it!
+    return JSON.parse(jsonLike)
+  } catch (err) {
+    console.error("Error parsing tool_code:", err, toolCode)
     return null
   }
 }
