@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextRequest, NextResponse } from "next/server" // Import NextResponse
-
+import { createDynamicUIPrompt } from "@/lib/gemini-tools"
 // Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
 
@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
 
     // Prepare the chat history
     const chatHistory = []
-
+    let schemas = createDynamicUIPrompt()
+    console.debug("Schemas: ", schemas)
     // Add system message as a user message at the beginning
     chatHistory.push({
       role: "user",
@@ -58,29 +59,7 @@ export async function POST(req: NextRequest) {
           )
           \`\`\`
 
-          If the user asks for a product catalog, you should respond with:
-          \`\`\`tool_code
-          generateDynamicUI(
-            templateType='productCatalog',
-            title='Our Products',
-            description='Browse our amazing product selection',
-            sortBy='popularity',
-            filters=[
-              {
-                'name': 'category',
-                'options': ['Electronics', 'Clothing', 'Home Goods']
-              }
-            ],
-            products=[
-              {
-                'id': '1',
-                'name': 'Awesome T-Shirt',
-                'price': 25.00,
-                'imageUrl': '...'
-              }
-            ]
-          )
-          \`\`\`
+          The Schemas for the templates are as follows: {schemas}
 
           Always wrap your generateDynamicUI function call in \`\`\`tool_code\`\`\` blocks.  Make sure the formatting is exactly as shown in the examples, including the newlines and spacing.
 

@@ -1,26 +1,51 @@
 // This file contains helper functions for working with Gemini and function calling
 
-// import { console } from "inspector"
+import { getTemplateSchema, getTemplateExample } from "./template-schemas"
 
-export function createDynamicUIPrompt(templateType: string) {
-  const templatePrompts: Record<string, string> = {
-    dashboard: `Create a dashboard template with metrics, charts, and recent activity.`,
-    dataTable: `Create a data table template with columns, data, and pagination.`,
-    productCatalog: `Create a product catalog template with products, categories, and sorting options.`,
-    profileCard: `Create a profile card template with user information and actions.`,
-    timeline: `Create a timeline template with events and filtering options.`,
-    gallery: `Create a gallery template with images and layout options.`,
-    pricing: `Create a pricing template with plans and features.`,
-    stats: `Create a stats template with statistics and metrics.`,
-    calendar: `Create a calendar template with events and view options.`,
-    wizard: `Create a wizard template with steps and navigation.`,
-    chart: `Create a chart template with data visualization options.`,
-    map: `Create a map template with markers and controls.`,
-    kanban: `Create a kanban template with columns and cards.`,
-    feed: `Create a feed template with posts and interactions.`,
-  }
+export function createDynamicUIPrompt() {
+  const templateTypes = [
+    "dashboard",
+    "dataTable",
+    "productCatalog",
+    "profileCard",
+    "timeline",
+    "gallery",
+    "pricing",
+    "stats",
+    "calendar",
+    "wizard",
+    "chart",
+    "map",
+    "kanban",
+    "feed",
+  ]
 
-  return templatePrompts[templateType] || `Create a ${templateType} template with appropriate content and structure.`
+  let schemaInfo = ""
+
+  templateTypes.forEach((type) => {
+    const schema = getTemplateSchema(type)
+    const example = getTemplateExample(type)
+
+    if (!schema.error) {
+      schemaInfo += `\n## ${type} Template\n`
+      schemaInfo += `Required fields: ${schema.required?.join(", ") || "None"}\n\n`
+
+      if (schema.properties) {
+        schemaInfo += "Key properties:\n"
+        Object.entries(schema.properties).forEach(([key, prop]) => {
+          schemaInfo += `- ${key}: ${(prop as any).description || "No description"}\n`
+        })
+      }
+
+      if (!example.error) {
+        schemaInfo += "\nExample:\n```json\n"
+        schemaInfo += JSON.stringify(example, null, 2)
+        schemaInfo += "\n```\n"
+      }
+    }
+  })
+
+  return schemaInfo
 }
 
 export function parseGeminiResponse(content: string) {
