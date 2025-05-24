@@ -152,6 +152,11 @@ With the rise of chatbots and conversational AI, Generative UI Chat unlocks new 
 
 ---
 
+## Dev branch Updates 
+#### Templates configured as tools to LLM's
+![image](https://github.com/user-attachments/assets/281ff9ec-88b0-4231-a831-2d4a9ffa2611)
+
+
 ## Troubleshooting
 
 - **Parsing errors:**  
