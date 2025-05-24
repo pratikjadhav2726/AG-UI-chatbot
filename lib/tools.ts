@@ -611,7 +611,7 @@ const feedSchema = baseTemplateSchema.extend({
 // Combine all template schemas
 const templateSchema = z.discriminatedUnion("templateType", [
   dashboardSchema,
-  // dataTableSchema,
+  dataTableSchema,
   // productCatalogSchema,
   // profileCardSchema,
   // timelineSchema,
