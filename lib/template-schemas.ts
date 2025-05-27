@@ -602,6 +602,758 @@ export function getTemplateSchema(templateType: string): Record<string, any> {
         },
       },
     },
+    timeline: {
+      required: ["templateType", "title", "events"],
+      properties: {
+        events: {
+          type: "array",
+          description: "Timeline events",
+          items: {
+            type: "object",
+            required: ["id", "title", "date"],
+            properties: {
+              id: { type: "string", description: "Unique ID for the event" },
+              title: { type: "string", description: "Title of the event" },
+              description: { type: "string", optional: true, description: "Description of the event" },
+              date: { type: "string", description: "Date of the event" },
+              icon: { type: "string", optional: true, description: "Icon for the event" },
+              category: { type: "string", optional: true, description: "Category of the event" },
+              color: { type: "string", optional: true, description: "Color for the event" },
+              media: {
+                type: "object",
+                optional: true,
+                properties: {
+                  type: { type: "string", enum: ["image", "video"], description: "Type of media" },
+                  url: { type: "string", description: "URL of the media" },
+                },
+                required: ["type", "url"],
+                description: "Media associated with the event",
+              },
+            },
+          },
+        },
+        layout: { type: "string", enum: ["vertical", "horizontal"], optional: true, description: "Layout style" },
+        groupByDate: { type: "boolean", optional: true, description: "Group events by date" },
+        filters: {
+          type: "array",
+          optional: true,
+          description: "Filter options",
+          items: {
+            type: "object",
+            required: ["id", "label", "type"],
+            properties: {
+              id: { type: "string" },
+              label: { type: "string" },
+              type: { type: "string", enum: ["category", "date"] },
+              options: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["label", "value"],
+                  properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    gallery: {
+      required: ["templateType", "title", "items"],
+      properties: {
+        items: {
+          type: "array",
+          description: "Gallery items",
+          items: {
+            type: "object",
+            required: ["id", "imageUrl"],
+            properties: {
+              id: { type: "string" },
+              title: { type: "string", optional: true },
+              description: { type: "string", optional: true },
+              imageUrl: { type: "string" },
+              thumbnailUrl: { type: "string", optional: true },
+              category: { type: "string", optional: true },
+              tags: { type: "array", items: { type: "string" }, optional: true },
+              date: { type: "string", optional: true },
+            },
+          },
+        },
+        layout: { type: "string", enum: ["grid", "masonry", "carousel"], optional: true, description: "Layout style" },
+        categories: {
+          type: "array",
+          optional: true,
+          description: "Item categories",
+          items: {
+            type: "object",
+            required: ["id", "name"],
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+            },
+          },
+        },
+        lightbox: { type: "boolean", optional: true, description: "Enable lightbox for images" },
+        columns: { type: "number", optional: true, description: "Number of columns in grid layout" },
+      },
+    },
+    pricing: {
+      required: ["templateType", "title", "plans"],
+      properties: {
+        plans: {
+          type: "array",
+          description: "Pricing plans",
+          items: {
+            type: "object",
+            required: ["id", "name", "description", "price", "cta"],
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              description: { type: "string" },
+              price: { type: "number" },
+              discountedPrice: { type: "number", optional: true },
+              interval: { type: "string", optional: true },
+              features: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["text"],
+                  properties: {
+                    text: { type: "string" },
+                    included: { type: "boolean", optional: true },
+                    icon: { type: "string", optional: true },
+                  },
+                },
+              },
+              cta: {
+                type: "object",
+                required: ["text", "action"],
+                properties: {
+                  text: { type: "string" },
+                  action: { type: "string" },
+                },
+              },
+              popular: { type: "boolean", optional: true },
+              color: { type: "string", optional: true },
+            },
+          },
+        },
+        currency: { type: "string", optional: true, description: "Currency for pricing" },
+        interval: { type: "string", enum: ["monthly", "yearly", "one-time"], optional: true, description: "Billing interval" },
+        showToggle: { type: "boolean", optional: true, description: "Show interval toggle" },
+        comparison: { type: "boolean", optional: true, description: "Show comparison table" },
+      },
+    },
+    stats: {
+      required: ["templateType", "title", "stats"],
+      properties: {
+        stats: {
+          type: "array",
+          description: "Statistics to display",
+          items: {
+            type: "object",
+            required: ["id", "label", "value"],
+            properties: {
+              id: { type: "string" },
+              label: { type: "string" },
+              value: { type: "string" }, // Note: In Zod schema it's union, simplified to string here
+              description: { type: "string", optional: true },
+              change: { type: "number", optional: true },
+              changeType: { type: "string", enum: ["increase", "decrease", "neutral"], optional: true },
+              icon: { type: "string", optional: true },
+              color: { type: "string", optional: true },
+              chart: {
+                type: "object",
+                optional: true,
+                properties: {
+                  type: { type: "string", enum: ["sparkline", "radial"] },
+                  data: { type: "array", items: { type: "number" } },
+                },
+                required: ["type", "data"],
+              },
+            },
+          },
+        },
+        layout: { type: "string", enum: ["grid", "list"], optional: true, description: "Layout style" },
+        columns: { type: "number", optional: true, description: "Number of columns in grid layout" },
+      },
+    },
+    calendar: {
+      required: ["templateType", "title"],
+      properties: {
+        view: { type: "string", enum: ["month", "week", "day", "agenda"], optional: true, description: "Calendar view" },
+        events: {
+          type: "array",
+          optional: true,
+          description: "Calendar events",
+          items: {
+            type: "object",
+            required: ["id", "title", "start"],
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              start: { type: "string", description: "Event start date/time" },
+              end: { type: "string", optional: true, description: "Event end date/time" },
+              allDay: { type: "boolean", optional: true },
+              location: { type: "string", optional: true },
+              description: { type: "string", optional: true },
+              category: { type: "string", optional: true },
+              color: { type: "string", optional: true },
+            },
+          },
+        },
+        categories: {
+          type: "array",
+          optional: true,
+          description: "Event categories",
+          items: {
+            type: "object",
+            required: ["id", "name", "color"],
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              color: { type: "string" },
+            },
+          },
+        },
+        selectable: { type: "boolean", optional: true, description: "Allow date selection" },
+        defaultDate: { type: "string", optional: true, description: "Default selected date" },
+      },
+    },
+    wizard: {
+      required: ["templateType", "title", "steps"],
+      properties: {
+        steps: {
+          type: "array",
+          description: "Wizard steps",
+          items: {
+            type: "object",
+            required: ["id", "title"],
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              description: { type: "string", optional: true },
+              fields: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["id", "type", "label"],
+                  properties: {
+                    id: { type: "string" },
+                    type: {
+                      type: "string",
+                      enum: [
+                        "text", "number", "email", "password", "textarea", "select",
+                        "checkbox", "radio", "date", "time", "file",
+                      ],
+                    },
+                    label: { type: "string" },
+                    placeholder: { type: "string", optional: true },
+                    required: { type: "boolean", optional: true },
+                    options: {
+                      type: "array",
+                      optional: true,
+                      items: {
+                        type: "object",
+                        required: ["label", "value"],
+                        properties: {
+                          label: { type: "string" },
+                          value: { type: "string" },
+                        },
+                      },
+                    },
+                    helpText: { type: "string", optional: true },
+                  },
+                },
+              },
+              content: { type: "string", optional: true },
+            },
+          },
+        },
+        currentStep: { type: "number", optional: true, description: "Current step index" },
+        orientation: { type: "string", enum: ["horizontal", "vertical"], optional: true, description: "Wizard orientation" },
+        showStepIndicator: { type: "boolean", optional: true, description: "Show step indicator" },
+        allowSkip: { type: "boolean", optional: true, description: "Allow skipping steps" },
+        allowBack: { type: "boolean", optional: true, description: "Allow going back to previous steps" },
+      },
+    },
+    chart: {
+      required: ["templateType", "title", "chartType", "data"],
+      properties: {
+        chartType: { type: "string", enum: ["line", "bar", "pie", "area", "scatter", "radar", "mixed"], description: "Chart type" },
+        data: {
+          type: "object",
+          description: "Chart data",
+          required: ["labels", "datasets"],
+          properties: {
+            labels: { type: "array", items: { type: "string" } },
+            datasets: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["label", "data"],
+                properties: {
+                  label: { type: "string" },
+                  data: { type: "array", items: { type: "number" } },
+                  backgroundColor: { type: "string", optional: true }, // Simplified from union
+                  borderColor: { type: "string", optional: true }, // Simplified from union
+                  type: { type: "string", optional: true },
+                },
+              },
+            },
+          },
+        },
+        options: {
+          type: "object",
+          optional: true,
+          description: "Chart options",
+          properties: {
+            aspectRatio: { type: "number", optional: true },
+            responsive: { type: "boolean", optional: true },
+            maintainAspectRatio: { type: "boolean", optional: true },
+            showLegend: { type: "boolean", optional: true },
+            showTooltips: { type: "boolean", optional: true },
+            showGrid: { type: "boolean", optional: true },
+            stacked: { type: "boolean", optional: true },
+          },
+        },
+        height: { type: "number", optional: true, description: "Chart height" },
+        filters: {
+          type: "array",
+          optional: true,
+          description: "Filter options",
+          items: {
+            type: "object",
+            required: ["id", "label", "type"],
+            properties: {
+              id: { type: "string" },
+              label: { type: "string" },
+              type: { type: "string", enum: ["select", "date", "range"] },
+              options: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["label", "value"],
+                  properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    map: {
+      required: ["templateType", "title", "center"],
+      properties: {
+        center: {
+          type: "object",
+          description: "Map center coordinates",
+          required: ["lat", "lng"],
+          properties: {
+            lat: { type: "number" },
+            lng: { type: "number" },
+          },
+        },
+        zoom: { type: "number", optional: true, description: "Map zoom level" },
+        markers: {
+          type: "array",
+          optional: true,
+          description: "Map markers",
+          items: {
+            type: "object",
+            required: ["id", "position"],
+            properties: {
+              id: { type: "string" },
+              position: {
+                type: "object",
+                required: ["lat", "lng"],
+                properties: {
+                  lat: { type: "number" },
+                  lng: { type: "number" },
+                },
+              },
+              title: { type: "string", optional: true },
+              description: { type: "string", optional: true },
+              icon: { type: "string", optional: true },
+              color: { type: "string", optional: true },
+            },
+          },
+        },
+        polygons: {
+          type: "array",
+          optional: true,
+          description: "Map polygons",
+          items: {
+            type: "object",
+            required: ["id", "paths"],
+            properties: {
+              id: { type: "string" },
+              paths: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["lat", "lng"],
+                  properties: {
+                    lat: { type: "number" },
+                    lng: { type: "number" },
+                  },
+                },
+              },
+              fillColor: { type: "string", optional: true },
+              strokeColor: { type: "string", optional: true },
+              title: { type: "string", optional: true },
+            },
+          },
+        },
+        showControls: { type: "boolean", optional: true, description: "Show map controls" },
+        mapType: { type: "string", enum: ["roadmap", "satellite", "hybrid", "terrain"], optional: true, description: "Map type" },
+        height: { type: "number", optional: true, description: "Map height" },
+      },
+    },
+    kanban: {
+      required: ["templateType", "title", "columns"],
+      properties: {
+        columns: {
+          type: "array",
+          description: "Kanban columns and cards",
+          items: {
+            type: "object",
+            required: ["id", "title", "cards"],
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              color: { type: "string", optional: true },
+              limit: { type: "number", optional: true },
+              cards: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["id", "title"],
+                  properties: {
+                    id: { type: "string" },
+                    title: { type: "string" },
+                    description: { type: "string", optional: true },
+                    labels: {
+                      type: "array",
+                      optional: true,
+                      items: {
+                        type: "object",
+                        required: ["text", "color"],
+                        properties: {
+                          text: { type: "string" },
+                          color: { type: "string" },
+                        },
+                      },
+                    },
+                    dueDate: { type: "string", optional: true },
+                    assignees: {
+                      type: "array",
+                      optional: true,
+                      items: {
+                        type: "object",
+                        required: ["name"],
+                        properties: {
+                          name: { type: "string" },
+                          avatarUrl: { type: "string", optional: true },
+                        },
+                      },
+                    },
+                    attachments: { type: "number", optional: true },
+                    comments: { type: "number", optional: true },
+                    priority: { type: "string", enum: ["low", "medium", "high", "urgent"], optional: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+        allowDragDrop: { type: "boolean", optional: true, description: "Allow drag and drop" },
+        collapsibleColumns: { type: "boolean", optional: true, description: "Allow collapsing columns" },
+        filters: {
+          type: "array",
+          optional: true,
+          description: "Filter options",
+          items: {
+            type: "object",
+            required: ["id", "label", "type"],
+            properties: {
+              id: { type: "string" },
+              label: { type: "string" },
+              type: { type: "string", enum: ["assignee", "label", "priority", "dueDate"] },
+              options: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["label", "value"],
+                  properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    feed: {
+      required: ["templateType", "title", "posts"],
+      properties: {
+        posts: {
+          type: "array",
+          description: "Feed posts",
+          items: {
+            type: "object",
+            required: ["id", "author", "content", "timestamp"],
+            properties: {
+              id: { type: "string" },
+              author: {
+                type: "object",
+                required: ["name"],
+                properties: {
+                  name: { type: "string" },
+                  avatarUrl: { type: "string", optional: true },
+                  title: { type: "string", optional: true },
+                },
+              },
+              content: { type: "string" },
+              timestamp: { type: "string" },
+              media: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["type", "url"],
+                  properties: {
+                    type: { type: "string", enum: ["image", "video"] },
+                    url: { type: "string" },
+                    thumbnailUrl: { type: "string", optional: true },
+                  },
+                },
+              },
+              likes: { type: "number", optional: true },
+              comments: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["id", "author", "content", "timestamp"],
+                  properties: {
+                    id: { type: "string" },
+                    author: {
+                      type: "object",
+                      required: ["name"],
+                      properties: {
+                        name: { type: "string" },
+                        avatarUrl: { type: "string", optional: true },
+                      },
+                    },
+                    content: { type: "string" },
+                    timestamp: { type: "string" },
+                    likes: { type: "number", optional: true },
+                  },
+                },
+              },
+              tags: { type: "array", items: { type: "string" }, optional: true },
+            },
+          },
+        },
+        layout: { type: "string", enum: ["timeline", "grid", "compact"], optional: true, description: "Feed layout" },
+        allowComments: { type: "boolean", optional: true, description: "Allow commenting" },
+        allowLikes: { type: "boolean", optional: true, description: "Allow liking" },
+        filters: {
+          type: "array",
+          optional: true,
+          description: "Filter options",
+          items: {
+            type: "object",
+            required: ["id", "label", "type"],
+            properties: {
+              id: { type: "string" },
+              label: { type: "string" },
+              type: { type: "string", enum: ["author", "tag", "date"] },
+              options: {
+                type: "array",
+                optional: true,
+                items: {
+                  type: "object",
+                  required: ["label", "value"],
+                  properties: {
+                    label: { type: "string" },
+                    value: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    timeline: {
+      templateType: "timeline",
+      title: "Project Milestones",
+      events: [
+        { id: "1", title: "Project Kick-off", date: "2024-01-15", description: "Initial meeting with stakeholders." },
+        { id: "2", title: "Development Sprint 1", date: "2024-02-01", category: "Development", icon: "code" },
+      ],
+      layout: "vertical",
+    },
+    gallery: {
+      templateType: "gallery",
+      title: "Photo Gallery",
+      items: [
+        { id: "1", imageUrl: "/placeholder.svg?height=300&width=400", title: "Mountain View", description: "A beautiful mountain landscape." },
+        { id: "2", imageUrl: "/placeholder.svg?height=300&width=400", title: "City Skyline", category: "Urban" },
+      ],
+      layout: "grid",
+      lightbox: true,
+    },
+    pricing: {
+      templateType: "pricing",
+      title: "Subscription Plans",
+      plans: [
+        {
+          id: "basic",
+          name: "Basic",
+          description: "For individuals",
+          price: 10,
+          features: [{ text: "Feature A" }, { text: "Feature B" }],
+          cta: { text: "Choose Basic", action: "subscribe_basic" },
+        },
+        {
+          id: "pro",
+          name: "Pro",
+          description: "For teams",
+          price: 25,
+          popular: true,
+          features: [{ text: "All Basic Features" }, { text: "Feature C" }, { text: "Feature D" }],
+          cta: { text: "Choose Pro", action: "subscribe_pro" },
+        },
+      ],
+      currency: "USD",
+      interval: "monthly",
+    },
+    stats: {
+      templateType: "stats",
+      title: "Key Performance Indicators",
+      stats: [
+        { id: "users", label: "Active Users", value: "1,500", change: 15, changeType: "increase", icon: "users" },
+        { id: "sales", label: "Monthly Sales", value: "$25,000", description: "Target: $30,000", color: "green" },
+      ],
+      layout: "grid",
+      columns: 2,
+    },
+    calendar: {
+      templateType: "calendar",
+      title: "Team Schedule",
+      view: "week",
+      events: [
+        { id: "1", title: "Team Meeting", start: "2024-03-15T10:00:00", end: "2024-03-15T11:00:00", category: "Meetings", color: "blue" },
+        { id: "2", title: "Project Deadline", start: "2024-03-18", allDay: true, category: "Deadlines", color: "red" },
+      ],
+      selectable: true,
+    },
+    wizard: {
+      templateType: "wizard",
+      title: "Onboarding Process",
+      steps: [
+        { id: "welcome", title: "Welcome", content: "Welcome to our platform!" },
+        {
+          id: "profile",
+          title: "Profile Setup",
+          fields: [
+            { id: "name", type: "text", label: "Full Name", required: true },
+            { id: "email", type: "email", label: "Email Address", placeholder: "you@example.com" },
+          ],
+        },
+        { id: "finish", title: "Finish", description: "You're all set!" },
+      ],
+      orientation: "horizontal",
+      currentStep: 0,
+    },
+    chart: {
+      templateType: "chart",
+      title: "Sales Over Time",
+      chartType: "line",
+      data: {
+        labels: ["Jan", "Feb", "Mar", "Apr"],
+        datasets: [
+          { label: "Product A Sales", data: [100, 120, 150, 130], borderColor: "blue" },
+          { label: "Product B Sales", data: [80, 90, 110, 100], borderColor: "green" },
+        ],
+      },
+      options: { showLegend: true, aspectRatio: 2 },
+      height: 300,
+    },
+    map: {
+      templateType: "map",
+      title: "Store Locations",
+      center: { lat: 37.7749, lng: -122.4194 }, // San Francisco
+      zoom: 12,
+      markers: [
+        { id: "store1", position: { lat: 37.7749, lng: -122.4194 }, title: "Downtown Store", description: "Open 9am-5pm" },
+        { id: "store2", position: { lat: 37.7599, lng: -122.4394 }, title: "Mission Store", icon: "custom_pin" },
+      ],
+      mapType: "roadmap",
+    },
+    kanban: {
+      templateType: "kanban",
+      title: "Project Tasks",
+      columns: [
+        {
+          id: "todo",
+          title: "To Do",
+          cards: [
+            { id: "task1", title: "Design new logo", description: "Create mockups for client review", priority: "high" },
+            { id: "task2", title: "Develop homepage" },
+          ],
+        },
+        {
+          id: "inprogress",
+          title: "In Progress",
+          cards: [{ id: "task3", title: "Write documentation", assignees: [{ name: "Alice" }] }],
+        },
+        {
+          id: "done",
+          title: "Done",
+          cards: [{ id: "task4", title: "Deploy to staging" }],
+        },
+      ],
+      allowDragDrop: true,
+    },
+    feed: {
+      templateType: "feed",
+      title: "Company Updates",
+      posts: [
+        {
+          id: "post1",
+          author: { name: "Admin", avatarUrl: "/placeholder.svg?height=40&width=40" },
+          content: "Welcome to the new platform! We're excited to share updates here.",
+          timestamp: "2024-03-14T10:00:00Z",
+          likes: 15,
+        },
+        {
+          id: "post2",
+          author: { name: "Marketing Team" },
+          content: "Check out our latest blog post on new features!",
+          timestamp: "2024-03-13T15:30:00Z",
+          media: [{ type: "image", url: "/placeholder.svg?height=200&width=300" }],
+          tags: ["announcement", "features"],
+        },
+      ],
+      layout: "timeline",
+      allowComments: true,
+    },
   }
 
   return (
@@ -746,6 +1498,161 @@ export function getTemplateExample(templateType: string): Record<string, any> {
           variant: "outline",
         },
       ],
+    },
+    timeline: {
+      templateType: "timeline",
+      title: "Project Milestones",
+      events: [
+        { id: "1", title: "Project Kick-off", date: "2024-01-15", description: "Initial meeting with stakeholders." },
+        { id: "2", title: "Development Sprint 1", date: "2024-02-01", category: "Development", icon: "code" },
+      ],
+      layout: "vertical",
+    },
+    gallery: {
+      templateType: "gallery",
+      title: "Photo Gallery",
+      items: [
+        { id: "1", imageUrl: "/placeholder.svg?height=300&width=400", title: "Mountain View", description: "A beautiful mountain landscape." },
+        { id: "2", imageUrl: "/placeholder.svg?height=300&width=400", title: "City Skyline", category: "Urban" },
+      ],
+      layout: "grid",
+      lightbox: true,
+    },
+    pricing: {
+      templateType: "pricing",
+      title: "Subscription Plans",
+      plans: [
+        {
+          id: "basic",
+          name: "Basic",
+          description: "For individuals",
+          price: 10,
+          features: [{ text: "Feature A" }, { text: "Feature B" }],
+          cta: { text: "Choose Basic", action: "subscribe_basic" },
+        },
+        {
+          id: "pro",
+          name: "Pro",
+          description: "For teams",
+          price: 25,
+          popular: true,
+          features: [{ text: "All Basic Features" }, { text: "Feature C" }, { text: "Feature D" }],
+          cta: { text: "Choose Pro", action: "subscribe_pro" },
+        },
+      ],
+      currency: "USD",
+      interval: "monthly",
+    },
+    stats: {
+      templateType: "stats",
+      title: "Key Performance Indicators",
+      stats: [
+        { id: "users", label: "Active Users", value: "1,500", change: 15, changeType: "increase", icon: "users" },
+        { id: "sales", label: "Monthly Sales", value: "$25,000", description: "Target: $30,000", color: "green" },
+      ],
+      layout: "grid",
+      columns: 2,
+    },
+    calendar: {
+      templateType: "calendar",
+      title: "Team Schedule",
+      view: "week",
+      events: [
+        { id: "1", title: "Team Meeting", start: "2024-03-15T10:00:00", end: "2024-03-15T11:00:00", category: "Meetings", color: "blue" },
+        { id: "2", title: "Project Deadline", start: "2024-03-18", allDay: true, category: "Deadlines", color: "red" },
+      ],
+      selectable: true,
+    },
+    wizard: {
+      templateType: "wizard",
+      title: "Onboarding Process",
+      steps: [
+        { id: "welcome", title: "Welcome", content: "Welcome to our platform!" },
+        {
+          id: "profile",
+          title: "Profile Setup",
+          fields: [
+            { id: "name", type: "text", label: "Full Name", required: true },
+            { id: "email", type: "email", label: "Email Address", placeholder: "you@example.com" },
+          ],
+        },
+        { id: "finish", title: "Finish", description: "You're all set!" },
+      ],
+      orientation: "horizontal",
+      currentStep: 0,
+    },
+    chart: {
+      templateType: "chart",
+      title: "Sales Over Time",
+      chartType: "line",
+      data: {
+        labels: ["Jan", "Feb", "Mar", "Apr"],
+        datasets: [
+          { label: "Product A Sales", data: [100, 120, 150, 130], borderColor: "blue" },
+          { label: "Product B Sales", data: [80, 90, 110, 100], borderColor: "green" },
+        ],
+      },
+      options: { showLegend: true, aspectRatio: 2 },
+      height: 300,
+    },
+    map: {
+      templateType: "map",
+      title: "Store Locations",
+      center: { lat: 37.7749, lng: -122.4194 }, // San Francisco
+      zoom: 12,
+      markers: [
+        { id: "store1", position: { lat: 37.7749, lng: -122.4194 }, title: "Downtown Store", description: "Open 9am-5pm" },
+        { id: "store2", position: { lat: 37.7599, lng: -122.4394 }, title: "Mission Store", icon: "custom_pin" },
+      ],
+      mapType: "roadmap",
+    },
+    kanban: {
+      templateType: "kanban",
+      title: "Project Tasks",
+      columns: [
+        {
+          id: "todo",
+          title: "To Do",
+          cards: [
+            { id: "task1", title: "Design new logo", description: "Create mockups for client review", priority: "high" },
+            { id: "task2", title: "Develop homepage" },
+          ],
+        },
+        {
+          id: "inprogress",
+          title: "In Progress",
+          cards: [{ id: "task3", title: "Write documentation", assignees: [{ name: "Alice" }] }],
+        },
+        {
+          id: "done",
+          title: "Done",
+          cards: [{ id: "task4", title: "Deploy to staging" }],
+        },
+      ],
+      allowDragDrop: true,
+    },
+    feed: {
+      templateType: "feed",
+      title: "Company Updates",
+      posts: [
+        {
+          id: "post1",
+          author: { name: "Admin", avatarUrl: "/placeholder.svg?height=40&width=40" },
+          content: "Welcome to the new platform! We're excited to share updates here.",
+          timestamp: "2024-03-14T10:00:00Z",
+          likes: 15,
+        },
+        {
+          id: "post2",
+          author: { name: "Marketing Team" },
+          content: "Check out our latest blog post on new features!",
+          timestamp: "2024-03-13T15:30:00Z",
+          media: [{ type: "image", url: "/placeholder.svg?height=200&width=300" }],
+          tags: ["announcement", "features"],
+        },
+      ],
+      layout: "timeline",
+      allowComments: true,
     },
   }
 

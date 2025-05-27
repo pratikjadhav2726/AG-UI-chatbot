@@ -612,24 +612,24 @@ const feedSchema = baseTemplateSchema.extend({
 const templateSchema = z.discriminatedUnion("templateType", [
   dashboardSchema,
   dataTableSchema,
-  // productCatalogSchema,
-  // profileCardSchema,
-  // timelineSchema,
-  // gallerySchema,
-  // pricingSchema,
-  // statsSchema,
-  // calendarSchema,
-  // wizardSchema,
-  // chartSchema,
-  // mapSchema,
-  // kanbanSchema,
-  // feedSchema,
+  productCatalogSchema,
+  profileCardSchema,
+  timelineSchema,
+  gallerySchema,
+  pricingSchema,
+  statsSchema,
+  calendarSchema,
+  wizardSchema,
+  chartSchema,
+  mapSchema,
+  kanbanSchema,
+  feedSchema,
 ])
 
 export const toolss = {
   generateDynamicUI: tool({
     description: "Generate a dynamic UI template to display information or collect data from the user",
-    parameters: dashboardSchema,
+    parameters: templateSchema,
     execute: async (templateConfig) => {
       return templateConfig
     },
