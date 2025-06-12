@@ -1,4 +1,5 @@
-import { templateSchemas, TemplateType, TemplateConfig } from "../schemas.js";
+import { templateSchemas, TemplateType } from "../schemas.js";
+import type { TemplateConfig } from "../schemas.js";
 
 export interface TemplateGenerator<T extends TemplateType> {
   name: string;
@@ -573,23 +574,34 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
 // For brevity, I'll create a few more key ones
 
 export class FormGenerator implements TemplateGenerator<"form"> {
-  name = "Dynamic Form Template";
-  description = "Multi-section forms with validation and various input types";
+  name = "Universal Form Template";
+  description = "Completely flexible forms supporting any field types, layouts, and configurations";
   capabilities = [
-    "Multi-section forms",
-    "Field validation",
-    "Various input types",
-    "Conditional fields",
+    "Any field types (text, select, checkbox, radio, file, etc.)",
+    "Multi-step wizard forms",
+    "Single-page forms",
+    "Custom validation rules",
+    "Conditional field logic",
+    "Dynamic field options",
+    "Custom styling and branding",
     "Progress indicators",
-    "File uploads"
+    "File uploads and previews",
+    "Custom field layouts",
+    "Gaming/tournament forms",
+    "Registration forms",
+    "Survey forms",
+    "Application forms"
   ];
   useCases = [
-    "User registration forms",
-    "Survey and feedback forms",
-    "Application forms",
+    "Gaming tournament registration",
+    "User registration",
+    "Survey and feedback",
+    "Job applications",
+    "Event registration",
     "Contact forms",
     "Order forms",
-    "Profile setup forms"
+    "Profile setup",
+    "Custom business forms"
   ];
 
   async generate(params: {
@@ -608,40 +620,57 @@ export class FormGenerator implements TemplateGenerator<"form"> {
       brandName?: string;
       brandColors?: string[];
       fontFamily?: string;
+      colors?: {
+        primary?: string;
+        secondary?: string;
+        accent?: string;
+        background?: string;
+      };
     };
   }): Promise<TemplateConfig<"form">> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig } = params;
 
-    const defaultSections = this.generateSections(useCase, customData);
+    // Use completely custom sections if provided, otherwise generate defaults
+    const sections = customConfig?.sections || customData?.sections || this.generateSections(useCase, customData);
 
     return {
       templateType: "form",
       title,
-      description: description || `${title} - Please fill out the form below`,
+      description: description || textContent?.description || `${title} - Please fill out the form below`,
       theme: theme || "system",
-      primaryColor,
+      primaryColor: primaryColor || brandingConfig?.colors?.primary,
       fullScreen: fullScreen || false,
-      closeButtonText: "Close",
+      closeButtonText: textContent?.closeButton || "Close",
+      
+      // Form configuration - completely flexible
       formStyle: customConfig?.formStyle || "modern",
-      headerImage: images?.[0]?.url || customConfig?.headerImage,
-      sections: customConfig?.sections || defaultSections,
-      submitButtonText: customConfig?.submitButtonText || "Submit Form",
-      cancelButtonText: customConfig?.cancelButtonText || "Cancel",
-      showProgress: customConfig?.showProgress !== false,
-      progressType: customConfig?.progressType || "bar",
+      headerImage: images?.[0]?.url || brandingConfig?.logoUrl || customConfig?.headerImage,
+      sections: sections,
+      submitButtonText: textContent?.submitButton || customConfig?.submitButtonText || "Submit",
+      cancelButtonText: textContent?.cancelButton || customConfig?.cancelButtonText || "Cancel",
+      
+      // Progress and multi-step settings
+      showProgress: customConfig?.showProgress !== false && sections.length > 1,
+      progressType: customConfig?.progressType || "steps",
+      
+      // Actions and behavior
       submitAction: customConfig?.submitAction || {
         type: "api",
-        successMessage: "Form submitted successfully!",
-        errorMessage: "There was an error submitting the form."
+        endpoint: customConfig?.submitEndpoint,
+        successMessage: textContent?.successMessage || "Form submitted successfully!",
+        errorMessage: textContent?.errorMessage || "There was an error submitting the form."
       },
-      footer: customConfig?.footer || (textContent ? {
-        text: textContent.footerText || "By submitting this form, you agree to our terms and conditions.",
-        links: [
-          { text: "Privacy Policy", url: "/privacy" },
-          { text: "Terms of Service", url: "/terms" }
-        ]
-      } : undefined),
-      branding: brandingConfig || customConfig?.branding,
+      
+      // Footer and legal
+      footer: customConfig?.footer || this.generateFooter(textContent, brandingConfig),
+      
+      // Branding and styling
+      branding: {
+        logoUrl: brandingConfig?.logoUrl || images?.find(img => img.category === 'logo')?.url,
+        companyName: brandingConfig?.brandName, // Map brandName to companyName
+        contactInfo: textContent?.contactInfo || "Contact us for support"
+      },
+      
       // Enhanced dynamic content
       customData,
       images,
@@ -651,6 +680,155 @@ export class FormGenerator implements TemplateGenerator<"form"> {
   }
 
   private generateSections(useCase?: string, customData?: Record<string, any>) {
+    // Gaming tournament registration form
+    if (useCase?.toLowerCase().includes("gaming") || useCase?.toLowerCase().includes("tournament")) {
+      return [
+        {
+          id: "player-info",
+          title: "Player Information",
+          description: "Tell us about yourself",
+          columns: 2,
+          fields: [
+            {
+              id: "gamerTag",
+              type: "text" as const,
+              label: "Gamer Tag",
+              placeholder: "Enter your gamer tag",
+              required: true,
+              validation: {
+                minLength: 3,
+                maxLength: 20,
+                pattern: "^[a-zA-Z0-9_-]+$",
+                message: "Gamer tag must be 3-20 characters, alphanumeric, underscore, or dash only"
+              }
+            },
+            {
+              id: "realName",
+              type: "text" as const,
+              label: "Real Name",
+              placeholder: "Enter your real name",
+              required: true
+            },
+            {
+              id: "email",
+              type: "email" as const,
+              label: "Email Address",
+              placeholder: "Enter your email",
+              required: true
+            },
+            {
+              id: "discord",
+              type: "text" as const,
+              label: "Discord Username",
+              placeholder: "Enter your Discord username",
+              required: false
+            }
+          ]
+        },
+        {
+          id: "game-info",
+          title: "Game Information",
+          description: "Game preferences and team details",
+          columns: 1,
+          fields: [
+            {
+              id: "gamePreference",
+              type: "select" as const,
+              label: "Primary Game",
+              required: true,
+              options: [
+                { label: "Valorant", value: "valorant" },
+                { label: "CS2", value: "cs2" },
+                { label: "League of Legends", value: "lol" }
+              ]
+            },
+            {
+              id: "skillLevel",
+              type: "radio" as const,
+              label: "Skill Level",
+              required: true,
+              options: [
+                { label: "Beginner", value: "beginner" },
+                { label: "Intermediate", value: "intermediate" },
+                { label: "Advanced", value: "advanced" }
+              ]
+            },
+            {
+              id: "teamName",
+              type: "text" as const,
+              label: "Team Name (Optional)",
+              placeholder: "Enter your team name if applicable",
+              required: false
+            },
+            {
+              id: "hasTeam",
+              type: "checkbox" as const,
+              label: "Team Status",
+              options: [
+                { label: "I have a pre-formed team", value: "hasTeam" },
+                { label: "Looking for teammates", value: "needTeam" }
+              ]
+            }
+          ]
+        },
+        {
+          id: "equipment",
+          title: "Equipment Specifications",
+          description: "Tell us about your gaming setup",
+          columns: 2,
+          fields: [
+            {
+              id: "mouse",
+              type: "text" as const,
+              label: "Gaming Mouse",
+              placeholder: "e.g., Logitech G Pro X",
+              required: false
+            },
+            {
+              id: "keyboard",
+              type: "text" as const,
+              label: "Gaming Keyboard",
+              placeholder: "e.g., Razer BlackWidow",
+              required: false
+            },
+            {
+              id: "headset",
+              type: "text" as const,
+              label: "Gaming Headset",
+              placeholder: "e.g., SteelSeries Arctis 7",
+              required: false
+            },
+            {
+              id: "monitor",
+              type: "text" as const,
+              label: "Monitor",
+              placeholder: "e.g., ASUS 144Hz 1080p",
+              required: false
+            },
+            {
+              id: "internetSpeed",
+              type: "select" as const,
+              label: "Internet Speed",
+              required: true,
+              options: [
+                { label: "Under 25 Mbps", value: "slow" },
+                { label: "25-100 Mbps", value: "medium" },
+                { label: "100+ Mbps", value: "fast" }
+              ]
+            },
+            {
+              id: "pcSpecs",
+              type: "textarea" as const,
+              label: "PC Specifications",
+              placeholder: "Briefly describe your CPU, GPU, RAM",
+              required: false
+            }
+          ]
+        }
+      ];
+    }
+
+    // Registration form
     if (useCase?.toLowerCase().includes("registration")) {
       return [
         {
@@ -688,29 +866,37 @@ export class FormGenerator implements TemplateGenerator<"form"> {
               required: false
             }
           ]
-        },
+        }
+      ];
+    }
+
+    // Survey form
+    if (useCase?.toLowerCase().includes("survey") || useCase?.toLowerCase().includes("feedback")) {
+      return [
         {
-          id: "preferences",
-          title: "Preferences",
-          description: "Tell us about your preferences",
+          id: "survey",
+          title: "Survey Questions",
+          description: "Please share your feedback",
           columns: 1,
           fields: [
             {
-              id: "notifications",
-              type: "checkbox" as const,
-              label: "Email Notifications",
-              required: false,
+              id: "satisfaction",
+              type: "radio" as const,
+              label: "Overall Satisfaction",
+              required: true,
               options: [
-                { label: "Marketing emails", value: "marketing" },
-                { label: "Product updates", value: "updates" },
-                { label: "Security alerts", value: "security" }
+                { label: "Very Satisfied", value: "5" },
+                { label: "Satisfied", value: "4" },
+                { label: "Neutral", value: "3" },
+                { label: "Dissatisfied", value: "2" },
+                { label: "Very Dissatisfied", value: "1" }
               ]
             },
             {
-              id: "bio",
+              id: "comments",
               type: "textarea" as const,
-              label: "Bio",
-              placeholder: "Tell us about yourself",
+              label: "Additional Comments",
+              placeholder: "Please share any additional feedback",
               required: false
             }
           ]
@@ -718,6 +904,45 @@ export class FormGenerator implements TemplateGenerator<"form"> {
       ];
     }
 
+    // Default generic form
+    return [
+      {
+        id: "information",
+        title: "Information",
+        description: "Please fill out the required information",
+        columns: 2,
+        fields: [
+          {
+            id: "name",
+            type: "text" as const,
+            label: "Name",
+            placeholder: "Enter your name",
+            required: true
+          },
+          {
+            id: "email",
+            type: "email" as const,
+            label: "Email",
+            placeholder: "Enter your email",
+            required: true
+          }
+        ]
+      }
+    ];
+  }
+
+  private generateFooter(textContent?: Record<string, string>, brandingConfig?: any) {
+    return {
+      text: textContent?.footerText || "By submitting this form, you agree to our terms and conditions.",
+      links: [
+        { text: "Privacy Policy", url: "/privacy" },
+        { text: "Terms of Service", url: "/terms" }
+      ]
+    };
+  }
+
+  // Helper method to generate contact form sections
+  private generateContactFormSections() {
     // Default contact form
     return [
       {

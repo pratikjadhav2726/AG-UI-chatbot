@@ -1,4 +1,9 @@
-import { templateSchemas, TemplateType, TemplateConfig } from "../schemas.js";
+import { templateSchemas } from "../schemas.js";
+// Type imports for compile-time only
+import type { TemplateType, TemplateConfig } from "../schemas.js";
+
+// Runtime type for the template registry
+type TemplateTypeRuntime = keyof typeof templateSchemas;
 import { 
   DashboardGenerator, 
   DataTableGenerator, 
@@ -10,7 +15,7 @@ import {
 } from "./generators.js";
 
 // Template registry
-export const templates: Record<TemplateType, TemplateGenerator<any>> = {
+export const templates: Record<TemplateTypeRuntime, TemplateGenerator<any>> = {
   dashboard: new DashboardGenerator(),
   dataTable: new DataTableGenerator(),
   productCatalog: new ProductCatalogGenerator(),
@@ -36,18 +41,19 @@ export const templates: Record<TemplateType, TemplateGenerator<any>> = {
 };
 
 // Export template schemas and types for validation
-export { templateSchemas, TemplateType, TemplateConfig };
+export { templateSchemas, TemplateType };
+export type { TemplateConfig };
 
 // Helper function to get template by type
-export function getTemplate(type: TemplateType): TemplateGenerator<any> | undefined {
+export function getTemplate(type: TemplateTypeRuntime): TemplateGenerator<any> | undefined {
   return templates[type];
 }
 
 // Helper function to generate template config
 export async function generateTemplate(
-  type: TemplateType, 
+  type: TemplateTypeRuntime, 
   params: any = {}
-): Promise<TemplateConfig<any>> {
+): Promise<any> {
   const template = getTemplate(type);
   if (!template) {
     throw new Error(`Template type "${type}" not found`);
@@ -57,12 +63,12 @@ export async function generateTemplate(
 }
 
 // Helper function to get template schema
-export function getTemplateSchema(type: TemplateType) {
+export function getTemplateSchema(type: TemplateTypeRuntime) {
   return templateSchemas[type];
 }
 
 // Helper function to validate template config
-export function validateTemplateConfig(type: TemplateType, config: any): boolean {
+export function validateTemplateConfig(type: TemplateTypeRuntime, config: any): boolean {
   const schema = getTemplateSchema(type);
   return schema ? schema.safeParse(config).success : false;
 }
