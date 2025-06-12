@@ -1,163 +1,250 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-import { NextRequest, NextResponse } from "next/server" // Import NextResponse
-import { createDynamicUIPrompt } from "@/lib/gemini-tools"
-// Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
+// app/api/chat/route.ts
+import { NextRequest, NextResponse } from "next/server"
+import { generateText, tool, CoreMessage } from 'ai';
+import { openai } from '@ai-sdk/openai'
+import { z } from 'zod';
+import { getMCPClient } from '@/lib/mcp-client';
+
+// MCP UI Tool for generating dynamic templates
+const mcpUITool = tool({
+  description: 'Generate dynamic UI templates using shadcn/ui components. Can create dashboards, forms, tables, product catalogs, and more.',
+  parameters: z.object({
+    templateType: z.enum([
+      "dashboard",
+      "dataTable", 
+      "productCatalog",
+      "profileCard",
+      "timeline",
+      "gallery",
+      "pricing",
+      "stats",
+      "calendar",
+      "wizard",
+      "chart",
+      "map",
+      "kanban",
+      "feed",
+      "form",
+      "marketplace",
+      "analytics",
+      "ecommerce",
+      "blog",
+      "portfolio"
+    ]).describe("Type of UI template to generate"),
+    title: z.string().describe("Title for the template"),
+    description: z.string().optional().describe("Description of the template"),
+    config: z.record(z.any()).optional().describe("Template-specific configuration"),
+    useCase: z.string().optional().describe("Specific use case or context for the template"),
+    theme: z.enum(["light", "dark", "system"]).optional().default("system").describe("Color theme"),
+    primaryColor: z.string().optional().describe("Primary color (hex code)"),
+    fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen")
+  }),
+  execute: async ({ templateType, title, description, config, useCase, theme, primaryColor, fullScreen }) => {
+    try {
+      const mcpClient = getMCPClient();
+      
+      // Call the MCP server to generate the template
+      const result = await mcpClient.callTool({
+        name: 'generate_ui_template',
+        arguments: {
+          templateType,
+          title,
+          description,
+          config,
+          useCase,
+          theme,
+          primaryColor,
+          fullScreen
+        }
+      });
+
+      if (result.isError) {
+        throw new Error(result.content[0]?.text || 'Unknown MCP error');
+      }
+
+      // Parse the template configuration from MCP response
+      const templateConfig = JSON.parse(result.content[0]?.text || '{}');
+      
+      return {
+        success: true,
+        template: templateConfig,
+        message: `Generated ${templateType} template: ${title} (via MCP)`
+      };
+    } catch (error) {
+      console.error('Error calling MCP server, falling back to hardcoded templates:', error);
+      
+      // Fallback to basic template structure if MCP fails
+      const fallbackConfig = {
+        templateType,
+        title,
+        description: description || `${title} - Generated using AI`,
+        theme: theme || "system",
+        primaryColor: primaryColor || "#3b82f6",
+        fullScreen: fullScreen || false,
+        closeButtonText: "Close",
+        actionButtonText: "Take Action",
+        // Add template-specific configuration based on type
+        ...(templateType === "dashboard" && {
+          layout: "grid",
+          metrics: [
+            {
+              id: "users",
+              label: "Total Users", 
+              value: "12,458",
+              change: 12.5,
+              changeType: "increase",
+              icon: "Users",
+              color: "#3b82f6"
+            },
+            {
+              id: "revenue",
+              label: "Revenue",
+              value: "$45,210", 
+              change: 8.2,
+              changeType: "increase",
+              icon: "DollarSign",
+              color: "#10b981"
+            }
+          ],
+          charts: [
+            {
+              id: "trend",
+              type: "line",
+              title: "Growth Trend",
+              data: {
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                datasets: [{
+                  label: "Users",
+                  data: [1000, 1200, 1400, 1300, 1600, 1800],
+                  borderColor: "#3b82f6"
+                }]
+              },
+              height: 300
+            }
+          ]
+        }),
+        ...(templateType === "form" && {
+          sections: [
+            {
+              id: "main",
+              title: "Information",
+              description: "Please fill out the form",
+              columns: 1,
+              fields: [
+                {
+                  id: "name",
+                  type: "text",
+                  label: "Full Name",
+                  placeholder: "Enter your name",
+                  required: true
+                },
+                {
+                  id: "email", 
+                  type: "email",
+                  label: "Email Address",
+                  placeholder: "Enter your email",
+                  required: true
+                },
+                {
+                  id: "message",
+                  type: "textarea",
+                  label: "Message",
+                  placeholder: "Enter your message"
+                }
+              ]
+            }
+          ],
+          submitButtonText: "Submit",
+          showProgress: false
+        }),
+        ...(templateType === "dataTable" && {
+          columns: [
+            { id: "id", header: "ID", accessorKey: "id", enableSorting: true },
+            { id: "name", header: "Name", accessorKey: "name", enableSorting: true },
+            { id: "status", header: "Status", accessorKey: "status", cell: { type: "badge" } },
+            { id: "date", header: "Date", accessorKey: "date", enableSorting: true }
+          ],
+          data: Array.from({ length: 10 }, (_, i) => ({
+            id: i + 1,
+            name: `Item ${i + 1}`,
+            status: ["Active", "Inactive", "Pending"][i % 3],
+            date: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          })),
+          pagination: {
+            enabled: true,
+            pageSize: 10
+          }
+        }),
+        ...(templateType === "productCatalog" && {
+          layout: "grid",
+          products: [
+            {
+              id: "1",
+              name: "Premium Product",
+              description: "High-quality product with excellent features",
+              price: 299.99,
+              currency: "USD",
+              imageUrl: "/placeholder.jpg",
+              rating: 4.8,
+              category: "Electronics",
+              inStock: true
+            },
+            {
+              id: "2", 
+              name: "Standard Product",
+              description: "Reliable product for everyday use",
+              price: 199.99,
+              currency: "USD",
+              imageUrl: "/placeholder.jpg",
+              rating: 4.5,
+              category: "Electronics", 
+              inStock: true
+            }
+          ],
+          categories: [
+            { id: "electronics", name: "Electronics" },
+            { id: "accessories", name: "Accessories" }
+          ]
+        }),
+        // Add other template configurations as needed
+        ...config
+      };
+
+      return {
+        success: true,
+        template: fallbackConfig,
+        message: `Generated ${templateType} template: ${title} (fallback mode)`
+      };
+    }
+  }
+});
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const { messages }: { messages: CoreMessage[] } = await req.json()
 
-    // Create a generative model instance
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    })
-
-    // Prepare the chat history
-    const chatHistory = []
-    let schemas = createDynamicUIPrompt()
-    console.debug("Schemas: ", schemas)
-    // Add system message as a user message at the beginning
-    chatHistory.push({
-      role: "user",
-      parts: [
-        {
-          text: `You are a helpful assistant that can generate dynamic UI components.
-          You should use the generateDynamicUI function to create a custom interface when the user asks to *see* data, *create* a UI, or *manage* information.  Do not use generateDynamicUI for simple questions or greetings.
-
-          Here are some examples:
-
-          If the user asks for a dashboard, you should respond with:
-          \`\`\`tool_code
-          generateDynamicUI(
-            templateType='dashboard',
-            title='Marketing Performance',
-            description='Overview of key marketing metrics',
-            dateRange='Last 30 Days',
-            metrics=[
-              {
-                'id': 'visits',
-                'label': 'Website Visits',
-                'value': '12,345',
-                'change': 10,
-                'changeType': 'increase'
-              },
-              {
-                'id': 'leads',
-                'label': 'New Leads',
-                'value': '678',
-                'change': -5,
-                'changeType': 'decrease'
-              }
-            ],
-            charts=[
-              {
-                'type': 'line',
-                'data': [...]
-              }
-            ]
-          )
-          \`\`\`
-
-          The Schemas for the templates are as follows: {schemas}
-
-          Always wrap your generateDynamicUI function call in \`\`\`tool_code\`\`\` blocks.  Make sure the formatting is exactly as shown in the examples, including the newlines and spacing.
-
-          You can generate various types of UI templates including:
-          - dashboard: For displaying metrics and KPIs
-          - dataTable: For displaying tabular data with sorting and filtering
-          - productCatalog: For displaying products with images and details
-          - profileCard: For displaying user profiles
-          - timeline: For displaying chronological events
-          - gallery: For displaying images in a grid or carousel
-          - pricing: For displaying pricing plans and options
-          - stats: For displaying statistics and metrics
-          - calendar: For displaying events or selecting dates
-          - wizard: For multi-step processes
-          - chart: For data visualization
-          - map: For location-based information
-          - kanban: For task management
-          - feed: For social media style content
-
-          Be thoughtful about what template is most appropriate for the current context and how it should be structured.
-          You can specify the content, layout, styling, and interactive elements for each template.
-
-          This is a system message. Now I'll act as a user asking you questions.`,
-        },
-      ],
-    })
-
-    // Add a model response to acknowledge the system message
-    chatHistory.push({
-      role: "model",
-      parts: [
-        {
-          text: "I understand. I'll act as a helpful assistant that can generate dynamic UI components when appropriate. I'll use the generateDynamicUI function wrapped in tool_code blocks when needed. How can I help you today?",
-        },
-      ],
-    })
-
-    // Convert the messages from the AI SDK format to Gemini format
-    const convertedMessages: any[] = []
-
-    for (const message of messages) {
-      // Skip the initial welcome message as it's not part of the actual conversation
-      if (message.id === "welcome-message") continue
-
-      // Convert role names (user stays user, assistant becomes model)
-      const role = message.role === "user" ? "user" : "model"
-
-      convertedMessages.push({
-        role,
-        parts: [{ text: message.content }],
-      })
-    }
-
-    // Add all converted messages to the chat history
-    chatHistory.push(...convertedMessages)
-
-    // Create the chat session
-    const chat = model.startChat({
-      history: chatHistory,
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.8,
-        topK: 40,
+    const completion = await generateText({
+      model: openai('gpt-4-turbo'),
+      messages,
+      tools: {
+        generateUITemplate: mcpUITool,
       },
+      toolChoice: "auto",
+      maxTokens: 4000,
     })
 
-    // Get the last user message
-    const lastUserMessage = messages.filter((m) => m.role === "user").pop()
-
-    if (!lastUserMessage) {
-      throw new Error("No user message found")
-    }
-
-    // Send the message and get the response
-    const result = await chat.sendMessage(lastUserMessage.content)
-    const response = await result.response
-    const text = response.text()
-
-    // Create a ReadableStream from the response text
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode(text))
-        controller.close()
-      },
+    // Return the complete response including any tool calls and results
+    return NextResponse.json({
+      message: completion.text,
+      toolCalls: completion.toolCalls,
+      toolResults: completion.toolResults,
+      usage: completion.usage
     })
-
-    // Return the stream response using NextResponse
-    return new NextResponse(stream)
   } catch (error) {
-    console.error("Error in chat route:", error)
-    return new NextResponse(JSON.stringify({ error: "Failed to generate response", details: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    })
+    console.error('Chat API Error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
-
-export const config = {
-  runtime: 'edge',
-};

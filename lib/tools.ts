@@ -4,12 +4,12 @@ import { z } from "zod"
 // Base schema for all templates
 const baseTemplateSchema = z.object({
   title: z.string().describe("Title of the template"),
-  description: z.string().optional().describe("Description of the template"),
-  theme: z.enum(["light", "dark", "system"]).optional().default("system").describe("Color theme"),
-  primaryColor: z.string().optional().describe("Primary color (hex code)"),
-  fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen"),
-  closeButtonText: z.string().optional().default("Close").describe("Text for the close button"),
-  actionButtonText: z.string().optional().describe("Text for the primary action button"),
+  description: z.string().nullable().describe("Description of the template"),
+  theme: z.enum(["light", "dark", "system"]).nullable().default("system").describe("Color theme"),
+  primaryColor: z.string().nullable().describe("Primary color (hex code)"),
+  fullScreen: z.boolean().nullable().default(false).describe("Whether to display in full screen"),
+  closeButtonText: z.string().nullable().default("Close").describe("Text for the close button"),
+  actionButtonText: z.string().nullable().describe("Text for the primary action button"),
 })
 
 // Dashboard template schema
@@ -22,10 +22,10 @@ const dashboardSchema = baseTemplateSchema.extend({
         id: z.string(),
         label: z.string(),
         value: z.union([z.string(), z.number()]),
-        change: z.number().optional(),
-        changeType: z.enum(["increase", "decrease", "neutral"]).optional(),
-        icon: z.string().optional(),
-        color: z.string().optional(),
+        change: z.number().nullable(),
+        changeType: z.enum(["increase", "decrease", "neutral"]).nullable(),
+        icon: z.string().nullable(),
+        color: z.string().nullable(),
       }),
     )
     .describe("Metrics to display"),
@@ -36,22 +36,22 @@ const dashboardSchema = baseTemplateSchema.extend({
         type: z.enum(["line", "bar", "pie", "area"]),
         title: z.string(),
         data: z.any(),
-        height: z.number().optional().default(200),
+        height: z.number().nullable().default(200),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Charts to display"),
   recentActivity: z
     .array(
       z.object({
         id: z.string(),
         title: z.string(),
-        description: z.string().optional(),
+        description: z.string().nullable(),
         timestamp: z.string(),
-        icon: z.string().optional(),
+        icon: z.string().nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Recent activity items"),
 })
 
@@ -64,13 +64,13 @@ const dataTableSchema = baseTemplateSchema.extend({
         id: z.string(),
         header: z.string(),
         accessorKey: z.string(),
-        enableSorting: z.boolean().optional().default(true),
+        enableSorting: z.boolean().nullable().default(true),
         cell: z
           .object({
             type: z.enum(["text", "badge", "image", "actions"]),
-            options: z.record(z.any()).optional(),
+            options: z.record(z.any()).nullable(),
           })
-          .optional(),
+          .nullable(),
       }),
     )
     .describe("Table columns"),
@@ -79,9 +79,9 @@ const dataTableSchema = baseTemplateSchema.extend({
     .object({
       enabled: z.boolean().default(true),
       pageSize: z.number().default(10),
-      pageSizeOptions: z.array(z.number()).optional().default([5, 10, 20, 50]),
+      pageSizeOptions: z.array(z.number()).nullable().default([5, 10, 20, 50]),
     })
-    .optional()
+    .nullable()
     .describe("Pagination options"),
   filters: z
     .array(
@@ -89,10 +89,10 @@ const dataTableSchema = baseTemplateSchema.extend({
         id: z.string(),
         label: z.string(),
         type: z.enum(["select", "text", "date", "boolean"]),
-        options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        options: z.array(z.object({ label: z.string(), value: z.string() })).nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Filter options"),
 })
 
@@ -107,12 +107,12 @@ const productCatalogSchema = baseTemplateSchema.extend({
         name: z.string(),
         description: z.string(),
         price: z.number(),
-        currency: z.string().optional().default("USD"),
-        imageUrl: z.string().optional(),
-        rating: z.number().optional(),
-        badges: z.array(z.string()).optional(),
-        category: z.string().optional(),
-        inStock: z.boolean().optional().default(true),
+        currency: z.string().nullable().default("USD"),
+        imageUrl: z.string().nullable(),
+        rating: z.number().nullable(),
+        badges: z.array(z.string()).nullable(),
+        category: z.string().nullable(),
+        inStock: z.boolean().nullable().default(true),
       }),
     )
     .describe("Products to display"),
@@ -123,7 +123,7 @@ const productCatalogSchema = baseTemplateSchema.extend({
         name: z.string(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Product categories"),
   sorting: z
     .object({
@@ -135,9 +135,9 @@ const productCatalogSchema = baseTemplateSchema.extend({
             value: z.string(),
           }),
         )
-        .optional(),
+        .nullable(),
     })
-    .optional()
+    .nullable()
     .describe("Sorting options"),
 })
 
@@ -147,24 +147,24 @@ const profileCardSchema = baseTemplateSchema.extend({
   profile: z
     .object({
       name: z.string(),
-      title: z.string().optional(),
-      company: z.string().optional(),
-      bio: z.string().optional(),
-      avatarUrl: z.string().optional(),
-      coverImageUrl: z.string().optional(),
-      location: z.string().optional(),
-      email: z.string().optional(),
-      phone: z.string().optional(),
-      website: z.string().optional(),
+      title: z.string().nullable(),
+      company: z.string().nullable(),
+      bio: z.string().nullable(),
+      avatarUrl: z.string().nullable(),
+      coverImageUrl: z.string().nullable(),
+      location: z.string().nullable(),
+      email: z.string().nullable(),
+      phone: z.string().nullable(),
+      website: z.string().nullable(),
       socialLinks: z
         .array(
           z.object({
             platform: z.string(),
             url: z.string(),
-            icon: z.string().optional(),
+            icon: z.string().nullable(),
           }),
         )
-        .optional(),
+        .nullable(),
       stats: z
         .array(
           z.object({
@@ -172,7 +172,7 @@ const profileCardSchema = baseTemplateSchema.extend({
             value: z.union([z.string(), z.number()]),
           }),
         )
-        .optional(),
+        .nullable(),
     })
     .describe("Profile information"),
   actions: z
@@ -180,11 +180,11 @@ const profileCardSchema = baseTemplateSchema.extend({
       z.object({
         label: z.string(),
         action: z.string(),
-        variant: z.enum(["default", "outline", "ghost", "link"]).optional().default("default"),
-        icon: z.string().optional(),
+        variant: z.enum(["default", "outline", "ghost", "link"]).nullable().default("default"),
+        icon: z.string().nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Action buttons"),
 })
 
@@ -196,32 +196,32 @@ const timelineSchema = baseTemplateSchema.extend({
       z.object({
         id: z.string(),
         title: z.string(),
-        description: z.string().optional(),
+        description: z.string().nullable(),
         date: z.string(),
-        icon: z.string().optional(),
-        category: z.string().optional(),
-        color: z.string().optional(),
+        icon: z.string().nullable(),
+        category: z.string().nullable(),
+        color: z.string().nullable(),
         media: z
           .object({
             type: z.enum(["image", "video"]),
             url: z.string(),
           })
-          .optional(),
+          .nullable(),
       }),
     )
     .describe("Timeline events"),
   layout: z.enum(["vertical", "horizontal"]).default("vertical").describe("Layout style"),
-  groupByDate: z.boolean().optional().default(false).describe("Group events by date"),
+  groupByDate: z.boolean().nullable().default(false).describe("Group events by date"),
   filters: z
     .array(
       z.object({
         id: z.string(),
         label: z.string(),
         type: z.enum(["category", "date"]),
-        options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        options: z.array(z.object({ label: z.string(), value: z.string() })).nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Filter options"),
 })
 
@@ -233,13 +233,13 @@ const gallerySchema = baseTemplateSchema.extend({
     .array(
       z.object({
         id: z.string(),
-        title: z.string().optional(),
-        description: z.string().optional(),
+        title: z.string().nullable(),
+        description: z.string().nullable(),
         imageUrl: z.string(),
-        thumbnailUrl: z.string().optional(),
-        category: z.string().optional(),
-        tags: z.array(z.string()).optional(),
-        date: z.string().optional(),
+        thumbnailUrl: z.string().nullable(),
+        category: z.string().nullable(),
+        tags: z.array(z.string()).nullable(),
+        date: z.string().nullable(),
       }),
     )
     .describe("Gallery items"),
@@ -250,10 +250,10 @@ const gallerySchema = baseTemplateSchema.extend({
         name: z.string(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Item categories"),
-  lightbox: z.boolean().optional().default(true).describe("Enable lightbox for images"),
-  columns: z.number().optional().default(3).describe("Number of columns in grid layout"),
+  lightbox: z.boolean().nullable().default(true).describe("Enable lightbox for images"),
+  columns: z.number().nullable().default(3).describe("Number of columns in grid layout"),
 })
 
 // Pricing template schema
@@ -261,7 +261,7 @@ const pricingSchema = baseTemplateSchema.extend({
   templateType: z.literal("pricing"),
   currency: z.string().default("USD").describe("Currency for pricing"),
   interval: z.enum(["monthly", "yearly", "one-time"]).default("monthly").describe("Billing interval"),
-  showToggle: z.boolean().optional().default(false).describe("Show interval toggle"),
+  showToggle: z.boolean().nullable().default(false).describe("Show interval toggle"),
   plans: z
     .array(
       z.object({
@@ -269,25 +269,25 @@ const pricingSchema = baseTemplateSchema.extend({
         name: z.string(),
         description: z.string(),
         price: z.number(),
-        discountedPrice: z.number().optional(),
-        interval: z.string().optional(),
+        discountedPrice: z.number().nullable(),
+        interval: z.string().nullable(),
         features: z.array(
           z.object({
             text: z.string(),
             included: z.boolean().default(true),
-            icon: z.string().optional(),
+            icon: z.string().nullable(),
           }),
         ),
         cta: z.object({
           text: z.string(),
           action: z.string(),
         }),
-        popular: z.boolean().optional().default(false),
-        color: z.string().optional(),
+        popular: z.boolean().nullable().default(false),
+        color: z.string().nullable(),
       }),
     )
     .describe("Pricing plans"),
-  comparison: z.boolean().optional().default(false).describe("Show comparison table"),
+  comparison: z.boolean().nullable().default(false).describe("Show comparison table"),
 })
 
 // Stats template schema
@@ -300,21 +300,21 @@ const statsSchema = baseTemplateSchema.extend({
         id: z.string(),
         label: z.string(),
         value: z.union([z.string(), z.number()]),
-        description: z.string().optional(),
-        change: z.number().optional(),
-        changeType: z.enum(["increase", "decrease", "neutral"]).optional(),
-        icon: z.string().optional(),
-        color: z.string().optional(),
+        description: z.string().nullable(),
+        change: z.number().nullable(),
+        changeType: z.enum(["increase", "decrease", "neutral"]).nullable(),
+        icon: z.string().nullable(),
+        color: z.string().nullable(),
         chart: z
           .object({
             type: z.enum(["sparkline", "radial"]),
             data: z.array(z.number()),
           })
-          .optional(),
+          .nullable(),
       }),
     )
     .describe("Statistics to display"),
-  columns: z.number().optional().default(3).describe("Number of columns in grid layout"),
+  columns: z.number().nullable().default(3).describe("Number of columns in grid layout"),
 })
 
 // Calendar template schema
@@ -327,15 +327,15 @@ const calendarSchema = baseTemplateSchema.extend({
         id: z.string(),
         title: z.string(),
         start: z.string(),
-        end: z.string().optional(),
-        allDay: z.boolean().optional().default(false),
-        location: z.string().optional(),
-        description: z.string().optional(),
-        category: z.string().optional(),
-        color: z.string().optional(),
+        end: z.string().nullable(),
+        allDay: z.boolean().nullable().default(false),
+        location: z.string().nullable(),
+        description: z.string().nullable(),
+        category: z.string().nullable(),
+        color: z.string().nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Calendar events"),
   categories: z
     .array(
@@ -345,10 +345,10 @@ const calendarSchema = baseTemplateSchema.extend({
         color: z.string(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Event categories"),
-  selectable: z.boolean().optional().default(false).describe("Allow date selection"),
-  defaultDate: z.string().optional().describe("Default selected date"),
+  selectable: z.boolean().nullable().default(false).describe("Allow date selection"),
+  defaultDate: z.string().nullable().describe("Default selected date"),
 })
 
 // Wizard template schema
@@ -359,7 +359,7 @@ const wizardSchema = baseTemplateSchema.extend({
       z.object({
         id: z.string(),
         title: z.string(),
-        description: z.string().optional(),
+        description: z.string().nullable(),
         fields: z
           .array(
             z.object({
@@ -378,8 +378,8 @@ const wizardSchema = baseTemplateSchema.extend({
                 "file",
               ]),
               label: z.string(),
-              placeholder: z.string().optional(),
-              required: z.boolean().optional().default(false),
+              placeholder: z.string().nullable(),
+              required: z.boolean().nullable().default(false),
               options: z
                 .array(
                   z.object({
@@ -387,20 +387,20 @@ const wizardSchema = baseTemplateSchema.extend({
                     value: z.string(),
                   }),
                 )
-                .optional(),
-              helpText: z.string().optional(),
+                .nullable(),
+              helpText: z.string().nullable(),
             }),
           )
-          .optional(),
-        content: z.string().optional(),
+          .nullable(),
+        content: z.string().nullable(),
       }),
     )
     .describe("Wizard steps"),
-  currentStep: z.number().optional().default(0).describe("Current step index"),
+  currentStep: z.number().nullable().default(0).describe("Current step index"),
   orientation: z.enum(["horizontal", "vertical"]).default("horizontal").describe("Wizard orientation"),
-  showStepIndicator: z.boolean().optional().default(true).describe("Show step indicator"),
-  allowSkip: z.boolean().optional().default(false).describe("Allow skipping steps"),
-  allowBack: z.boolean().optional().default(true).describe("Allow going back to previous steps"),
+  showStepIndicator: z.boolean().nullable().default(true).describe("Show step indicator"),
+  allowSkip: z.boolean().nullable().default(false).describe("Allow skipping steps"),
+  allowBack: z.boolean().nullable().default(true).describe("Allow going back to previous steps"),
 })
 
 // Chart template schema
@@ -414,36 +414,36 @@ const chartSchema = baseTemplateSchema.extend({
         z.object({
           label: z.string(),
           data: z.array(z.number()),
-          backgroundColor: z.union([z.string(), z.array(z.string())]).optional(),
-          borderColor: z.union([z.string(), z.array(z.string())]).optional(),
-          type: z.string().optional(),
+          backgroundColor: z.union([z.string(), z.array(z.string())]).nullable(),
+          borderColor: z.union([z.string(), z.array(z.string())]).nullable(),
+          type: z.string().nullable(),
         }),
       ),
     })
     .describe("Chart data"),
   options: z
     .object({
-      aspectRatio: z.number().optional(),
-      responsive: z.boolean().optional().default(true),
-      maintainAspectRatio: z.boolean().optional().default(false),
-      showLegend: z.boolean().optional().default(true),
-      showTooltips: z.boolean().optional().default(true),
-      showGrid: z.boolean().optional().default(true),
-      stacked: z.boolean().optional().default(false),
+      aspectRatio: z.number().nullable(),
+      responsive: z.boolean().nullable().default(true),
+      maintainAspectRatio: z.boolean().nullable().default(false),
+      showLegend: z.boolean().nullable().default(true),
+      showTooltips: z.boolean().nullable().default(true),
+      showGrid: z.boolean().nullable().default(true),
+      stacked: z.boolean().nullable().default(false),
     })
-    .optional()
+    .nullable()
     .describe("Chart options"),
-  height: z.number().optional().default(400).describe("Chart height"),
+  height: z.number().nullable().default(400).describe("Chart height"),
   filters: z
     .array(
       z.object({
         id: z.string(),
         label: z.string(),
         type: z.enum(["select", "date", "range"]),
-        options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        options: z.array(z.object({ label: z.string(), value: z.string() })).nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Filter options"),
 })
 
@@ -456,7 +456,7 @@ const mapSchema = baseTemplateSchema.extend({
       lng: z.number(),
     })
     .describe("Map center coordinates"),
-  zoom: z.number().optional().default(10).describe("Map zoom level"),
+  zoom: z.number().nullable().default(10).describe("Map zoom level"),
   markers: z
     .array(
       z.object({
@@ -465,13 +465,13 @@ const mapSchema = baseTemplateSchema.extend({
           lat: z.number(),
           lng: z.number(),
         }),
-        title: z.string().optional(),
-        description: z.string().optional(),
-        icon: z.string().optional(),
-        color: z.string().optional(),
+        title: z.string().nullable(),
+        description: z.string().nullable(),
+        icon: z.string().nullable(),
+        color: z.string().nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Map markers"),
   polygons: z
     .array(
@@ -483,16 +483,16 @@ const mapSchema = baseTemplateSchema.extend({
             lng: z.number(),
           }),
         ),
-        fillColor: z.string().optional(),
-        strokeColor: z.string().optional(),
-        title: z.string().optional(),
+        fillColor: z.string().nullable(),
+        strokeColor: z.string().nullable(),
+        title: z.string().nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Map polygons"),
-  showControls: z.boolean().optional().default(true).describe("Show map controls"),
-  mapType: z.enum(["roadmap", "satellite", "hybrid", "terrain"]).optional().default("roadmap").describe("Map type"),
-  height: z.number().optional().default(400).describe("Map height"),
+  showControls: z.boolean().nullable().default(true).describe("Show map controls"),
+  mapType: z.enum(["roadmap", "satellite", "hybrid", "terrain"]).nullable().default("roadmap").describe("Map type"),
+  height: z.number().nullable().default(400).describe("Map height"),
 })
 
 // Kanban template schema
@@ -503,13 +503,13 @@ const kanbanSchema = baseTemplateSchema.extend({
       z.object({
         id: z.string(),
         title: z.string(),
-        color: z.string().optional(),
-        limit: z.number().optional(),
+        color: z.string().nullable(),
+        limit: z.number().nullable(),
         cards: z.array(
           z.object({
             id: z.string(),
             title: z.string(),
-            description: z.string().optional(),
+            description: z.string().nullable(),
             labels: z
               .array(
                 z.object({
@@ -517,36 +517,36 @@ const kanbanSchema = baseTemplateSchema.extend({
                   color: z.string(),
                 }),
               )
-              .optional(),
-            dueDate: z.string().optional(),
+              .nullable(),
+            dueDate: z.string().nullable(),
             assignees: z
               .array(
                 z.object({
                   name: z.string(),
-                  avatarUrl: z.string().optional(),
+                  avatarUrl: z.string().nullable(),
                 }),
               )
-              .optional(),
-            attachments: z.number().optional(),
-            comments: z.number().optional(),
-            priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+              .nullable(),
+            attachments: z.number().nullable(),
+            comments: z.number().nullable(),
+            priority: z.enum(["low", "medium", "high", "urgent"]).nullable(),
           }),
         ),
       }),
     )
     .describe("Kanban columns and cards"),
-  allowDragDrop: z.boolean().optional().default(true).describe("Allow drag and drop"),
-  collapsibleColumns: z.boolean().optional().default(false).describe("Allow collapsing columns"),
+  allowDragDrop: z.boolean().nullable().default(true).describe("Allow drag and drop"),
+  collapsibleColumns: z.boolean().nullable().default(false).describe("Allow collapsing columns"),
   filters: z
     .array(
       z.object({
         id: z.string(),
         label: z.string(),
         type: z.enum(["assignee", "label", "priority", "dueDate"]),
-        options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        options: z.array(z.object({ label: z.string(), value: z.string() })).nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Filter options"),
 })
 
@@ -559,8 +559,8 @@ const feedSchema = baseTemplateSchema.extend({
         id: z.string(),
         author: z.object({
           name: z.string(),
-          avatarUrl: z.string().optional(),
-          title: z.string().optional(),
+          avatarUrl: z.string().nullable(),
+          title: z.string().nullable(),
         }),
         content: z.string(),
         timestamp: z.string(),
@@ -569,42 +569,42 @@ const feedSchema = baseTemplateSchema.extend({
             z.object({
               type: z.enum(["image", "video"]),
               url: z.string(),
-              thumbnailUrl: z.string().optional(),
+              thumbnailUrl: z.string().nullable(),
             }),
           )
-          .optional(),
-        likes: z.number().optional().default(0),
+          .nullable(),
+        likes: z.number().nullable().default(0),
         comments: z
           .array(
             z.object({
               id: z.string(),
               author: z.object({
                 name: z.string(),
-                avatarUrl: z.string().optional(),
+                avatarUrl: z.string().nullable(),
               }),
               content: z.string(),
               timestamp: z.string(),
-              likes: z.number().optional().default(0),
+              likes: z.number().nullable().default(0),
             }),
           )
-          .optional(),
-        tags: z.array(z.string()).optional(),
+          .nullable(),
+        tags: z.array(z.string()).nullable(),
       }),
     )
     .describe("Feed posts"),
   layout: z.enum(["timeline", "grid", "compact"]).default("timeline").describe("Feed layout"),
-  allowComments: z.boolean().optional().default(true).describe("Allow commenting"),
-  allowLikes: z.boolean().optional().default(true).describe("Allow liking"),
+  allowComments: z.boolean().nullable().default(true).describe("Allow commenting"),
+  allowLikes: z.boolean().nullable().default(true).describe("Allow liking"),
   filters: z
     .array(
       z.object({
         id: z.string(),
         label: z.string(),
         type: z.enum(["author", "tag", "date"]),
-        options: z.array(z.object({ label: z.string(), value: z.string() })).optional(),
+        options: z.array(z.object({ label: z.string(), value: z.string() })).nullable(),
       }),
     )
-    .optional()
+    .nullable()
     .describe("Filter options"),
 })
 
@@ -626,10 +626,10 @@ const templateSchema = z.discriminatedUnion("templateType", [
   feedSchema,
 ])
 
-export const tools = {
+export const toolss = {
   generateDynamicUI: tool({
     description: "Generate a dynamic UI template to display information or collect data from the user",
-    parameters: templateSchema,
+    parameters: dataTableSchema,
     execute: async (templateConfig) => {
       return templateConfig
     },

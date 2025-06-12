@@ -1,180 +1,154 @@
+# Generative UI Chatbot with MCP Server
 
+A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP) and Anthropic's Claude Sonnet model. The system features a sophisticated MCP server that can generate over 20 different types of UI templates with realistic data and configurations.
 
-# Generative UI Chatbot
-
-This project is a Next.js-based chatbot that leverages Large Language Models (LLMs) to generate dynamic UI templates based on user requests. The assistant can respond with structured UI configurations (such as dashboards, tables, cards, charts, and more) using a special `generateDynamicUI` function, which are then rendered interactively in the frontend.
-
----
-
-## What is Generative UI Chat?
-
-Generative UI Chat enables users to interact with a conversational AI that can not only answer questions, but also dynamically create and render complex user interfaces on demand. By describing what you want in natural language, the chatbot can generate dashboards, data tables, visualizations, forms, and other interactive components—instantly and without manual coding.
-
----
-
-## Use Cases
-
-Generative UI Chatbots can be applied across a wide range of industries and scenarios, including but not limited to:
-
-- **Business Intelligence & Analytics**
-  - Instantly generate custom dashboards, charts, and reports from conversational queries.
-  - Example: "Show me a sales dashboard for Q1 with a bar chart and a summary table."
-
-- **Customer Support**
-  - Render troubleshooting guides, FAQs, or ticket status boards dynamically based on user input.
-  - Example: "Create a step-by-step guide for resetting my password."
-
-- **E-commerce**
-  - Build product catalogs, pricing tables, or personalized recommendations in real time.
-  - Example: "Show me a comparison table of the latest smartphones under $500."
-
-- **Healthcare**
-  - Visualize patient data, appointment schedules, or medication timelines interactively.
-  - Example: "Display a calendar of my upcoming appointments and a chart of my recent lab results."
-
-- **Education**
-  - Generate interactive quizzes, progress dashboards, or learning timelines for students.
-  - Example: "Create a quiz with 5 questions on world history and show my progress."
-
-- **Project Management**
-  - Create Kanban boards, timelines, or team status feeds on demand.
-  - Example: "Build a Kanban board for my current sprint with columns for To Do, In Progress, and Done."
-
-- **Finance**
-  - Render portfolio summaries, transaction tables, or financial charts conversationally.
-  - Example: "Show a pie chart of my monthly expenses and a table of recent transactions."
-
-- **HR & Operations**
-  - Generate employee directories, onboarding checklists, or event calendars.
-  - Example: "Create a profile card for a new employee and add it to the team directory."
-
----
 ![image](https://github.com/user-attachments/assets/c17ec7aa-f345-442c-a4e1-2f9e8d439f8f)
 
 ![image](https://github.com/user-attachments/assets/48bd560a-efc1-4b3e-89c1-509ded0516b3)
 ![image](https://github.com/user-attachments/assets/3ed12e86-ebe1-4bd3-b0ec-f3cfcb2d6df2)
 ![image](https://github.com/user-attachments/assets/c6195744-3041-4e73-83d1-a9b8fbf1771c)
 
-## What This Enables
+## 🚀 Features
 
-With the rise of chatbots and conversational AI, Generative UI Chat unlocks new possibilities:
+### MCP Server Capabilities
+- **20+ Template Types**: Dashboard, DataTable, ProductCatalog, Form, Analytics, Calendar, Kanban, Gallery, Pricing, Stats, Timeline, Feed, Map, Chart, Wizard, ProfileCard, Blog, Portfolio, Marketplace, and Ecommerce
+- **Rich Data Generation**: Contextual, realistic data for each template type
+- **Theme Support**: Light, dark, and system themes with custom color options
+- **JSON-RPC Protocol**: Standard MCP implementation for tool calling
+- **Type Safety**: Comprehensive Zod schemas for all template configurations
 
-- **No-Code UI Creation:** Users can build and customize interfaces without technical skills, simply by describing their needs in chat.
-- **Personalized Experiences:** Each user can receive tailored dashboards, reports, or workflows based on their unique requirements.
-- **Rapid Prototyping:** Teams can quickly visualize ideas, iterate on designs, and share interactive prototypes—all within a chat interface.
-- **Industry Agnostic:** The approach is flexible and can be adapted to any domain where dynamic data visualization or workflow automation is valuable.
-- **Seamless Integration:** The system can be connected to various data sources or APIs, enabling real-time, data-driven UI generation.
+### Chatbot Interface
+- **Natural Language Processing**: Powered by Anthropic's Claude Sonnet 3.5
+- **Interactive UI**: Real-time template generation and preview
+- **Template Suggestions**: Smart recommendations based on user context
+- **Conversation History**: Persistent chat history with template results
+- **Template Interactions**: Click interactions feed back into conversation
+- **Rich UI**: Modern interface built with shadcn/ui components
 
----
+### Template Components
+- **Dynamic Rendering**: Automatic component selection based on template type
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Interactive Elements**: Functional components with realistic interactions
+- **Loading States**: Smooth loading animations and error handling
+- **Accessibility**: WCAG compliant components throughout
 
-## Features
-
-- **Conversational UI:** Chat with an AI assistant that understands requests for dashboards, tables, charts, and more.
-- **Dynamic UI Generation:** The assistant can return UI templates in a special `tool_code` block, which are parsed and rendered live.
-- **LLM Integration:** Works with any Large Language Model capable of structured output for flexible, generative responses.
-- **Customizable Templates:** Supports a variety of UI types (dashboard, dataTable, productCatalog, profileCard, timeline, gallery, pricing, stats, calendar, wizard, chart, map, kanban, feed).
-- **Edge Runtime:** API routes run on the Vercel Edge Runtime for low latency.
-
----
-
-## Getting Started
+## 🛠 Setup Instructions
 
 ### Prerequisites
-
-- Node.js 18+
-- A Google Generative AI API key
+- Node.js 18+ and npm/pnpm
+- Anthropic API key ([Get one here](https://console.anthropic.com/))
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/generative-ui-chatbot.git
-   cd generative-ui-chatbot
-   ```
-
-2. **Install dependencies:**
+1. **Clone and Install Dependencies**
    ```bash
    npm install
    ```
 
-3. **Set up environment variables:**
-
-   Create a `.env.local` file in the root directory and add your Google API key:
-   ```
-   GOOGLE_API_KEY=your-google-api-key-here
-   ```
-
-4. **Run the development server:**
+2. **Set up Environment Variables**
    ```bash
+   cp .env.example .env.local
+   ```
+   
+   Add your Anthropic API key to `.env.local`:
+   ```bash
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   ```
+
+3. **Build and Start MCP Server**
+   ```bash
+   cd mcp-ui-server
+   npm run build
+   npm start
+   ```
+
+4. **Start Next.js Development Server**
+   ```bash
+   # In a new terminal
    npm run dev
    ```
 
-5. **Open your browser:**
-   ```
-   http://localhost:3000
-   ```
+5. **Open Application**
+   - Navigate to http://localhost:3001 (or 3000 if available)
+   - Start chatting with the AI to generate UI templates!
 
----
+## 🎯 Usage Examples
 
-## Project Structure
-
+### Basic Template Generation
 ```
-/app
-  /api/chat/route.ts      # API route for chat, integrates with Gemini
-  /page.tsx               # Main chat UI page
-/components
-  /dynamic-template.tsx   # Renders dynamic UI templates
-  /ui/                    # Reusable UI components (Button, Input, Card, etc.)
-/lib
-  /gemini-tools.ts        # Helper functions for parsing Gemini responses
-  /template-schemas.ts    # Template schema definitions and examples
+"Create a dashboard for a fitness app"
+"Generate a product catalog for an online bookstore"
+"Build a form for user registration"
 ```
 
----
+### Advanced Requests
+```
+"Create a dark-themed analytics dashboard for a SaaS company with revenue charts and user metrics"
+"Generate a marketplace interface for handmade crafts with filtering and categories"
+"Build a kanban board for project management with different priority levels"
+```
 
-## How It Works
+### Template Customization
+```
+"Make the dashboard full-screen with a blue color scheme"
+"Create a mobile-friendly pricing page for a subscription service"
+"Generate a gallery with a grid layout for a photography portfolio"
+```
 
-1. **User sends a message** in the chat UI.
-2. **API route** (`/api/chat/route.ts`) sends the conversation to Gemini, including a system prompt with template schemas and examples.
-3. **Gemini responds** with either a plain answer or a `tool_code` block containing a `generateDynamicUI(...)` function call.
-4. **Frontend parses** the `tool_code` block using `parseToolCode` and renders the corresponding UI using `DynamicTemplate`.
+## 📋 Available Template Types
 
----
+| Type | Description | Example Use Case |
+|------|-------------|------------------|
+| **dashboard** | Analytics dashboard with widgets | Business metrics, KPI monitoring |
+| **dataTable** | Sortable data table with filters | User management, inventory |
+| **productCatalog** | Product grid with search/filter | E-commerce, marketplace |
+| **form** | Dynamic form with validation | Registration, surveys, feedback |
+| **analytics** | Charts and data visualization | Reports, analytics dashboards |
+| **calendar** | Interactive calendar component | Events, scheduling, bookings |
+| **kanban** | Task board with drag-and-drop | Project management, workflows |
+| **gallery** | Image/media gallery with lightbox | Portfolio, media showcase |
+| **pricing** | Pricing tables and plans | SaaS pricing, service packages |
+| **stats** | Key metrics and statistics | Performance metrics, summaries |
+| **timeline** | Chronological event timeline | Project history, news feed |
+| **feed** | Social media style feed | Activity streams, updates |
+| **map** | Interactive map with markers | Location services, directories |
+| **chart** | Various chart types | Data visualization, reports |
+| **wizard** | Multi-step form wizard | Onboarding, complex forms |
+| **profileCard** | User profile display | Team pages, directories |
+| **blog** | Blog layout with articles | Content management, news |
+| **portfolio** | Portfolio showcase | Creative work, case studies |
+| **marketplace** | Marketplace interface | Buying/selling platforms |
+| **ecommerce** | E-commerce product pages | Online stores, catalogs |
 
-## Customization
+## 🚦 Troubleshooting
 
-- **Add new templates:**  
-  Define new schemas and examples in `/lib/template-schemas.ts`.
-- **Change system prompt:**  
-  Edit the prompt in `/api/chat/route.ts` to guide the assistant's behavior.
-- **UI tweaks:**  
-  Modify components in `/components/ui/` or `/components/dynamic-template.tsx`.
+### Common Issues
 
----
+1. **MCP Server Not Starting**
+   - Ensure you're in the `mcp-ui-server` directory
+   - Run `npm run build` before `npm start`
+   - Check for TypeScript compilation errors
 
-## Dev branch Updates 
-#### Templates configured as tools to LLM's
-![image](https://github.com/user-attachments/assets/281ff9ec-88b0-4231-a831-2d4a9ffa2611)
+2. **Anthropic API Errors**
+   - Verify your API key in `.env.local`
+   - Check API key permissions and credits
+   - Ensure network connectivity
 
+3. **Template Not Rendering**
+   - Check if template component exists in `components/templates/`
+   - Verify template type is registered in `dynamic-template.tsx`
+   - Look for console errors in browser developer tools
 
-## Troubleshooting
+## 🤝 How It Works
 
-- **Parsing errors:**  
-  Ensure all keys and string values in `tool_code` blocks use double quotes (`"`), not single quotes (`'`).
-- **API errors:**  
-  Check your `GOOGLE_API_KEY` and network connectivity.
-- **Debugging:**  
-  Use `console.log` or the Next.js debugger to trace issues in parsing or API calls.
+The system consists of two main components:
 
----
+1. **MCP Server** (`mcp-ui-server/`): A TypeScript server that implements the Model Context Protocol to generate UI template configurations with realistic data
+2. **Next.js Chatbot** (`/`): A React application with Anthropic Claude integration that provides a conversational interface for template generation
 
-## License
+The chatbot uses Claude Sonnet to understand user requests and translate them into MCP tool calls, which generate rich UI templates that are then rendered as React components.
 
-MIT
+## 📝 License
 
----
+This project is for educational and development purposes.
 
-## Credits
-
-- [Google Generative AI](https://ai.google.dev/)
-- [Next.js](https://nextjs.org/)

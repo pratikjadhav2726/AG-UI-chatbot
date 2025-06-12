@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -47,11 +46,21 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
 
   // Handle product click
   const handleProductClick = (product: any) => {
-    onDataChange({ selectedProduct: product })
+    onDataChange({ selectedProduct: product, action: "view_product", productId: product.id, productName: product.name })
+  }
+
+  // Handle add to cart
+  const handleAddToCart = (product: any) => {
+    onDataChange({ action: "add_to_cart", productId: product.id, productName: product.name, price: product.price })
+  }
+
+  // Handle wishlist
+  const handleWishlist = (product: any) => {
+    onDataChange({ action: "add_to_wishlist", productId: product.id, productName: product.name })
   }
 
   // Filter products by search and category
-  let filteredProducts = [...config.products]
+  let filteredProducts = [...(config.products || [])]
 
   if (searchTerm) {
     filteredProducts = filteredProducts.filter(
@@ -61,7 +70,7 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
     )
   }
 
-  if (selectedCategory) {
+  if (selectedCategory && selectedCategory !== "all") {
     filteredProducts = filteredProducts.filter((product) => product.category === selectedCategory)
   }
 
@@ -85,6 +94,59 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
     }
   }
 
+  // Render product image with fallback
+  const renderProductImage = (product: any) => {
+    const imageUrl = product.imageUrl || product.images?.[0] || "/placeholder.jpg?height=200&width=200"
+    const altText = product.name || "Product image"
+    
+    return (
+      <img
+        src={imageUrl}
+        alt={altText}
+        className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => handleProductClick(product)}
+        onError={(e) => {
+          e.currentTarget.src = "/placeholder.jpg?height=200&width=200"
+        }}
+      />
+    )
+  }
+
+  // Render hero section if available
+  const renderHeroSection = () => {
+    if (!config.heroSection) return null
+    
+    return (
+      <div 
+        className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-lg mb-8"
+        style={{ 
+          backgroundImage: config.heroSection.backgroundImageUrl ? `url(${config.heroSection.backgroundImageUrl})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold mb-4">{config.heroSection.title}</h1>
+          {config.heroSection.subtitle && (
+            <p className="text-xl mb-6 opacity-90">{config.heroSection.subtitle}</p>
+          )}
+          {config.heroSection.ctaText && (
+            <Button 
+              size="lg" 
+              variant="secondary"
+              onClick={() => onDataChange({ action: "hero_cta", text: config.heroSection.ctaText })}
+            >
+              {config.heroSection.ctaText}
+            </Button>
+          )}
+        </div>
+        {config.heroSection.backgroundImageUrl && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg"></div>
+        )}
+      </div>
+    )
+  }
+
   // Render star rating
   const renderRating = (rating: number) => {
     return (
@@ -102,6 +164,9 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
 
   return (
     <div className="space-y-4">
+      {/* Hero Section */}
+      {renderHeroSection()}
+      
       {/* Filters and search */}
       <div className="flex flex-col sm:flex-row gap-4 items-end">
         <div className="flex flex-wrap gap-2 flex-1">
@@ -119,7 +184,12 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
                     <SelectItem value="all">All Categories</SelectItem>
                     {config.categories.map((category: any) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {category.name}
+                        <div className="flex items-center gap-2">
+                          {category.imageUrl && (
+                            <img src={category.imageUrl} alt={category.name} className="w-4 h-4 rounded" />
+                          )}
+                          <span>{category.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -136,24 +206,14 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
                 </label>
                 <Select value={sortOption} onValueChange={handleSortChange}>
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Sort By" />
+                    <SelectValue placeholder="Sort by..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="default">Default</SelectItem>
-                    {config.sorting?.options ? (
-                      config.sorting.options.map((option: any) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <>
-                        <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                        <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                        <SelectItem value="name-asc">Name: A to Z</SelectItem>
-                        <SelectItem value="name-desc">Name: Z to A</SelectItem>
-                      </>
-                    )}
+                    <SelectItem value="featured">Featured</SelectItem>
+                    <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                    <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                    <SelectItem value="name-asc">Name: A-Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z-A</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -201,45 +261,88 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
       ) : layout === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden">
+            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-square relative">
-                <img
-                  src={product.imageUrl || `/placeholder.svg?height=200&width=200`}
-                  alt={product.name}
-                  className="object-cover w-full h-full"
-                />
+                {renderProductImage(product)}
                 {product.badges && product.badges.length > 0 && (
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {product.badges.map((badge: string, index: number) => (
-                      <Badge key={index} variant="secondary">
+                      <Badge key={index} variant="secondary" className="text-xs">
                         {badge}
                       </Badge>
                     ))}
                   </div>
                 )}
-                {!product.inStock && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Badge variant="destructive" className="text-lg">
-                      Out of Stock
+                {product.discount && (
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="destructive" className="text-xs">
+                      -{product.discount}%
                     </Badge>
                   </div>
                 )}
               </div>
               <CardContent className="p-4">
-                <div className="space-y-1">
-                  <h3 className="font-medium truncate">{product.name}</h3>
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-medium truncate flex-1">{product.name}</h3>
+                    {product.vendor && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {product.vendor}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                  {product.rating !== undefined && renderRating(product.rating)}
+                  
+                  {product.rating !== undefined && (
+                    <div className="flex items-center justify-between">
+                      {renderRating(product.rating)}
+                      {product.reviewCount && (
+                        <span className="text-xs text-muted-foreground">
+                          ({product.reviewCount} reviews)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {product.tags && product.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {product.tags.slice(0, 3).map((tag: string, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                <div className="font-bold">
-                  {product.currency || "$"}
-                  {product.price.toFixed(2)}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-lg">
+                      {product.currency || "$"}{product.price.toFixed(2)}
+                    </span>
+                    {product.discount && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        {product.currency || "$"}{(product.price * (1 + product.discount / 100)).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  {product.shippingInfo && (
+                    <span className="text-xs text-muted-foreground">{product.shippingInfo}</span>
+                  )}
                 </div>
-                <Button size="sm" disabled={!product.inStock} onClick={() => handleProductClick(product)}>
-                  {product.inStock ? "View Details" : "Sold Out"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleWishlist(product)}>
+                    ♡
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    disabled={!product.inStock} 
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    {product.inStock ? "Add to Cart" : "Sold Out"}
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
           ))}
@@ -250,11 +353,7 @@ export function ProductCatalogTemplate({ config, onDataChange }: ProductCatalogT
             <Card key={product.id} className="overflow-hidden">
               <div className="flex flex-col sm:flex-row">
                 <div className="sm:w-48 h-48">
-                  <img
-                    src={product.imageUrl || `/placeholder.svg?height=200&width=200`}
-                    alt={product.name}
-                    className="object-cover w-full h-full"
-                  />
+                  {renderProductImage(product)}
                 </div>
                 <div className="flex-1 p-4">
                   <div className="flex flex-col h-full justify-between">

@@ -21,6 +21,7 @@ import { ChartTemplate } from "@/components/templates/chart-template"
 import { MapTemplate } from "@/components/templates/map-template"
 import { KanbanTemplate } from "@/components/templates/kanban-template"
 import { FeedTemplate } from "@/components/templates/feed-template"
+import { FormTemplate } from "@/components/templates/form-template"
 
 interface DynamicTemplateProps {
   config: any
@@ -73,6 +74,48 @@ export function DynamicTemplate({ config, onInteraction, onClose }: DynamicTempl
         return <KanbanTemplate config={config} onDataChange={handleDataChange} />
       case "feed":
         return <FeedTemplate config={config} onDataChange={handleDataChange} />
+      case "form":
+        return <FormTemplate config={config} onDataChange={handleDataChange} />
+      case "marketplace":
+        return <div className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">Marketplace Template</h3>
+          <p className="text-gray-600">Multi-vendor marketplace with advanced filtering</p>
+          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
+      case "analytics":
+        return <div className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">Analytics Template</h3>
+          <p className="text-gray-600">Comprehensive analytics dashboards with KPIs</p>
+          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
+      case "ecommerce":
+        return <div className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">E-commerce Template</h3>
+          <p className="text-gray-600">Full-featured e-commerce product displays</p>
+          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
+      case "blog":
+        return <div className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">Blog Template</h3>
+          <p className="text-gray-600">Blog layouts with posts, categories, and authors</p>
+          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
+      case "portfolio":
+        return <div className="p-8 text-center">
+          <h3 className="text-lg font-semibold mb-2">Portfolio Template</h3>
+          <p className="text-gray-600">Professional portfolios with projects and skills</p>
+          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
+            {JSON.stringify(config, null, 2)}
+          </pre>
+        </div>
       default:
         return <div>Unknown template type: {config.templateType}</div>
     }
