@@ -87,11 +87,11 @@ server.tool(
 
       // Validate the configuration
       const validation = validateTemplateConfig(templateType as TemplateType, templateConfig);
-      if (!validation.success) {
+      if (!validation) {
         return {
           content: [{
             type: "text",
-            text: `Template validation failed: ${validation.errors?.join(", ") || "Unknown validation error"}`
+            text: `Template validation failed for ${templateType}`
           }],
           isError: true
         };
@@ -186,7 +186,7 @@ server.tool(
   async (params) => {
     try {
       const { templateType, useCase } = params;
-      const examples = generateTemplateExample(templateType as TemplateType, useCase);
+      const examples = await generateTemplateExample(templateType as TemplateType);
       
       return {
         content: [{

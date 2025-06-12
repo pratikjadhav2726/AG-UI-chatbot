@@ -46,7 +46,7 @@ const templateTypes = [
   "portfolio"
 ] as const;
 
-// Template generation tool
+// Enhanced Template generation tool with dynamic content support
 server.tool(
   "generate_ui_template",
   {
@@ -57,11 +57,27 @@ server.tool(
     useCase: z.string().optional().describe("Specific use case or context for the template"),
     theme: z.enum(["light", "dark", "system"]).optional().default("system").describe("Color theme"),
     primaryColor: z.string().optional().describe("Primary color (hex code)"),
-    fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen")
+    fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen"),
+    // Enhanced dynamic content parameters
+    customData: z.record(z.any()).optional().describe("Custom data object with any additional configuration"),
+    images: z.array(z.object({
+      id: z.string(),
+      url: z.string(),
+      alt: z.string().optional(),
+      caption: z.string().optional(),
+      category: z.string().optional()
+    })).optional().describe("Array of images to use in the template"),
+    textContent: z.record(z.string()).optional().describe("Custom text content for different sections"),
+    brandingConfig: z.object({
+      logoUrl: z.string().optional(),
+      brandName: z.string().optional(),
+      brandColors: z.array(z.string()).optional(),
+      fontFamily: z.string().optional()
+    }).optional().describe("Branding configuration for the template")
   },
   async (params) => {
     try {
-      const { templateType, title, description, config, useCase, theme, primaryColor, fullScreen } = params;
+      const { templateType, title, description, config, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig } = params;
       const template = templates[templateType as TemplateType];
       
       if (!template) {
@@ -74,7 +90,7 @@ server.tool(
         };
       }
 
-      // Generate template configuration
+      // Generate template configuration with enhanced parameters
       const templateConfig = await template.generate({
         title,
         description,
@@ -82,16 +98,20 @@ server.tool(
         customConfig: config,
         theme,
         primaryColor,
-        fullScreen
+        fullScreen,
+        customData,
+        images,
+        textContent,
+        brandingConfig
       });
 
       // Validate the configuration
       const validation = validateTemplateConfig(templateType as TemplateType, templateConfig);
-      if (!validation.success) {
+      if (!validation) {
         return {
           content: [{
             type: "text",
-            text: `Template validation failed: ${validation.errors?.join(", ") || "Unknown validation error"}`
+            text: `Template validation failed for ${templateType}`
           }],
           isError: true
         };
@@ -186,7 +206,7 @@ server.tool(
   async (params) => {
     try {
       const { templateType, useCase } = params;
-      const examples = generateTemplateExample(templateType as TemplateType, useCase);
+      const examples = await generateTemplateExample(templateType as TemplateType);
       
       return {
         content: [{

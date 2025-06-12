@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Base template schema
+// Enhanced base template schema for dynamic content
 export const BaseTemplateSchema = z.object({
   templateType: z.string(),
   title: z.string(),
@@ -9,10 +9,26 @@ export const BaseTemplateSchema = z.object({
   primaryColor: z.string().optional(),
   fullScreen: z.boolean().optional().default(false),
   closeButtonText: z.string().optional().default("Close"),
-  actionButtonText: z.string().optional()
+  actionButtonText: z.string().optional(),
+  // Dynamic content fields that LLM can customize
+  customData: z.record(z.any()).optional(), // For any additional dynamic data
+  images: z.array(z.object({
+    id: z.string(),
+    url: z.string(),
+    alt: z.string().optional(),
+    caption: z.string().optional(),
+    category: z.string().optional()
+  })).optional(), // Dynamic image collection
+  textContent: z.record(z.string()).optional(), // Dynamic text content
+  brandingConfig: z.object({
+    logoUrl: z.string().optional(),
+    brandName: z.string().optional(),
+    brandColors: z.array(z.string()).optional(),
+    fontFamily: z.string().optional()
+  }).optional()
 });
 
-// Dashboard template schema
+// Enhanced Dashboard template schema with dynamic content
 export const DashboardSchema = BaseTemplateSchema.extend({
   templateType: z.literal("dashboard"),
   layout: z.enum(["grid", "columns", "rows"]).default("grid"),
@@ -23,21 +39,49 @@ export const DashboardSchema = BaseTemplateSchema.extend({
     change: z.number().optional(),
     changeType: z.enum(["increase", "decrease", "neutral"]).optional(),
     icon: z.string().optional(),
-    color: z.string().optional()
+    color: z.string().optional(),
+    description: z.string().optional(),
+    target: z.number().optional(), // Target value for progress
+    unit: z.string().optional(), // e.g., "%", "$", "users"
+    trendData: z.array(z.number()).optional() // Mini trend chart data
   })),
   charts: z.array(z.object({
     id: z.string(),
-    type: z.enum(["line", "bar", "pie", "area"]),
+    type: z.enum(["line", "bar", "pie", "area", "scatter", "radar"]),
     title: z.string(),
+    description: z.string().optional(),
     data: z.any(),
-    height: z.number().optional().default(200)
+    height: z.number().optional().default(200),
+    colors: z.array(z.string()).optional(),
+    xAxisLabel: z.string().optional(),
+    yAxisLabel: z.string().optional(),
+    showLegend: z.boolean().optional().default(true),
+    gridLines: z.boolean().optional().default(true)
   })).optional(),
   recentActivity: z.array(z.object({
     id: z.string(),
     title: z.string(),
     description: z.string().optional(),
     timestamp: z.string(),
-    icon: z.string().optional()
+    icon: z.string().optional(),
+    imageUrl: z.string().optional(), // User avatar or related image
+    category: z.string().optional(),
+    priority: z.enum(["low", "medium", "high"]).optional(),
+    actionUrl: z.string().optional()
+  })).optional(),
+  widgets: z.array(z.object({
+    id: z.string(),
+    type: z.enum(["metric", "chart", "list", "image", "text", "progress"]),
+    title: z.string(),
+    content: z.any(), // Dynamic widget content
+    size: z.enum(["small", "medium", "large"]).optional().default("medium"),
+    position: z.object({ x: z.number(), y: z.number() }).optional()
+  })).optional(),
+  navigation: z.array(z.object({
+    label: z.string(),
+    icon: z.string().optional(),
+    action: z.string(),
+    badge: z.string().optional()
   })).optional()
 });
 
@@ -68,7 +112,7 @@ export const DataTableSchema = BaseTemplateSchema.extend({
   })).optional()
 });
 
-// Product Catalog template schema
+// Enhanced Product Catalog template schema with dynamic content
 export const ProductCatalogSchema = BaseTemplateSchema.extend({
   templateType: z.literal("productCatalog"),
   layout: z.enum(["grid", "list"]).default("grid"),
@@ -79,14 +123,25 @@ export const ProductCatalogSchema = BaseTemplateSchema.extend({
     price: z.number(),
     currency: z.string().optional().default("USD"),
     imageUrl: z.string().optional(),
+    images: z.array(z.string()).optional(), // Multiple product images
     rating: z.number().optional(),
+    reviewCount: z.number().optional(),
     badges: z.array(z.string()).optional(),
     category: z.string().optional(),
-    inStock: z.boolean().optional().default(true)
+    inStock: z.boolean().optional().default(true),
+    discount: z.number().optional(), // Percentage discount
+    specifications: z.record(z.string()).optional(), // Dynamic product specs
+    vendor: z.string().optional(),
+    sku: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    availability: z.string().optional(),
+    shippingInfo: z.string().optional()
   })),
   categories: z.array(z.object({
     id: z.string(),
-    name: z.string()
+    name: z.string(),
+    imageUrl: z.string().optional(),
+    description: z.string().optional()
   })).optional(),
   sorting: z.object({
     enabled: z.boolean().default(true),
@@ -94,6 +149,25 @@ export const ProductCatalogSchema = BaseTemplateSchema.extend({
       label: z.string(),
       value: z.string()
     })).optional()
+  }).optional(),
+  filters: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    type: z.enum(["select", "range", "checkbox", "color"]),
+    options: z.array(z.object({ 
+      label: z.string(), 
+      value: z.string(),
+      imageUrl: z.string().optional() 
+    })).optional(),
+    min: z.number().optional(),
+    max: z.number().optional()
+  })).optional(),
+  heroSection: z.object({
+    title: z.string(),
+    subtitle: z.string().optional(),
+    backgroundImageUrl: z.string().optional(),
+    ctaText: z.string().optional(),
+    ctaAction: z.string().optional()
   }).optional()
 });
 
@@ -155,26 +229,61 @@ export const TimelineSchema = BaseTemplateSchema.extend({
   })).optional()
 });
 
-// Gallery template schema
+// Enhanced Gallery template schema with dynamic content
 export const GallerySchema = BaseTemplateSchema.extend({
   templateType: z.literal("gallery"),
-  layout: z.enum(["grid", "masonry", "carousel"]).default("grid"),
+  layout: z.enum(["grid", "masonry", "carousel", "slider", "mosaic"]).default("grid"),
   items: z.array(z.object({
     id: z.string(),
     title: z.string().optional(),
     description: z.string().optional(),
     imageUrl: z.string(),
     thumbnailUrl: z.string().optional(),
+    highResUrl: z.string().optional(), // For lightbox
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    date: z.string().optional()
+    date: z.string().optional(),
+    author: z.string().optional(),
+    location: z.string().optional(),
+    dimensions: z.object({
+      width: z.number(),
+      height: z.number()
+    }).optional(),
+    metadata: z.record(z.string()).optional(), // EXIF or other metadata
+    likes: z.number().optional(),
+    views: z.number().optional(),
+    downloadUrl: z.string().optional(),
+    socialShare: z.boolean().optional().default(false)
   })),
   categories: z.array(z.object({
     id: z.string(),
-    name: z.string()
+    name: z.string(),
+    imageUrl: z.string().optional(),
+    description: z.string().optional(),
+    count: z.number().optional()
   })).optional(),
   lightbox: z.boolean().optional().default(true),
-  columns: z.number().optional().default(3)
+  columns: z.number().optional().default(3),
+  aspectRatio: z.string().optional(), // "16:9", "1:1", "auto"
+  spacing: z.number().optional().default(4),
+  filters: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    type: z.enum(["category", "tag", "date", "author"]),
+    options: z.array(z.object({ 
+      label: z.string(), 
+      value: z.string(),
+      count: z.number().optional() 
+    })).optional()
+  })).optional(),
+  sortOptions: z.array(z.object({
+    label: z.string(),
+    value: z.string()
+  })).optional().default([
+    { label: "Date", value: "date" },
+    { label: "Title", value: "title" },
+    { label: "Popular", value: "likes" }
+  ])
 });
 
 // Pricing template schema
@@ -413,42 +522,84 @@ export const FeedSchema = BaseTemplateSchema.extend({
   showTimestamps: z.boolean().optional().default(true)
 });
 
-// Form template schema
+// Enhanced Form template schema with dynamic content
 export const FormSchema = BaseTemplateSchema.extend({
   templateType: z.literal("form"),
+  formStyle: z.enum(["modern", "classic", "minimal", "card"]).optional().default("modern"),
+  headerImage: z.string().optional(), // Header/banner image for the form
   sections: z.array(z.object({
     id: z.string(),
     title: z.string().optional(),
     description: z.string().optional(),
+    icon: z.string().optional(),
     columns: z.number().optional().default(1),
+    backgroundImage: z.string().optional(),
+    collapsed: z.boolean().optional().default(false),
     fields: z.array(z.object({
       id: z.string(),
       type: z.enum([
         "text", "number", "email", "password", "textarea", "select", 
-        "checkbox", "radio", "date", "time", "file", "phone", "url", "color"
+        "checkbox", "radio", "date", "time", "file", "phone", "url", "color",
+        "range", "toggle", "rating", "signature", "rich-text", "image-upload"
       ]),
       label: z.string(),
       placeholder: z.string().optional(),
+      description: z.string().optional(),
       required: z.boolean().optional().default(false),
+      disabled: z.boolean().optional().default(false),
       validation: z.object({
         pattern: z.string().optional(),
         min: z.number().optional(),
         max: z.number().optional(),
         minLength: z.number().optional(),
-        maxLength: z.number().optional()
+        maxLength: z.number().optional(),
+        customMessage: z.string().optional()
       }).optional(),
       options: z.array(z.object({
         label: z.string(),
-        value: z.string()
+        value: z.string(),
+        icon: z.string().optional(),
+        imageUrl: z.string().optional(),
+        description: z.string().optional()
       })).optional(),
       helpText: z.string().optional(),
-      defaultValue: z.any().optional()
+      defaultValue: z.any().optional(),
+      conditional: z.object({
+        dependsOn: z.string(), // field ID
+        showWhen: z.string(), // value to show this field
+        operator: z.enum(["equals", "not-equals", "contains"]).optional().default("equals")
+      }).optional(),
+      styling: z.object({
+        width: z.enum(["full", "half", "third", "quarter"]).optional().default("full"),
+        backgroundColor: z.string().optional(),
+        borderColor: z.string().optional()
+      }).optional()
     }))
   })),
   submitButtonText: z.string().optional().default("Submit"),
   cancelButtonText: z.string().optional().default("Cancel"),
   resetButtonText: z.string().optional(),
-  showProgress: z.boolean().optional().default(false)
+  showProgress: z.boolean().optional().default(false),
+  progressType: z.enum(["bar", "steps", "percentage"]).optional().default("bar"),
+  submitAction: z.object({
+    type: z.enum(["api", "email", "redirect"]),
+    endpoint: z.string().optional(),
+    successMessage: z.string().optional(),
+    errorMessage: z.string().optional(),
+    redirectUrl: z.string().optional()
+  }).optional(),
+  footer: z.object({
+    text: z.string().optional(),
+    links: z.array(z.object({
+      text: z.string(),
+      url: z.string()
+    })).optional()
+  }).optional(),
+  branding: z.object({
+    logoUrl: z.string().optional(),
+    companyName: z.string().optional(),
+    contactInfo: z.string().optional()
+  }).optional()
 });
 
 // New template schemas for extended functionality

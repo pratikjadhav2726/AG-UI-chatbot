@@ -4,9 +4,9 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
 
-// MCP UI Tool for generating dynamic templates
+// Enhanced MCP UI Tool for generating dynamic templates with custom content
 const mcpUITool = tool({
-  description: 'Generate dynamic UI templates using the MCP server. This tool can create dashboards, forms, tables, product catalogs, analytics dashboards, and many other UI components with rich, contextual data.',
+  description: 'Generate dynamic UI templates using the MCP server. This tool can create dashboards, forms, tables, product catalogs, analytics dashboards, and many other UI components with rich, contextual data. You can customize images, text content, data, and branding.',
   parameters: z.object({
     templateType: z.enum([
       "dashboard",
@@ -35,13 +35,29 @@ const mcpUITool = tool({
     useCase: z.string().optional().describe("Specific use case or context for the template"),
     theme: z.enum(["light", "dark", "system"]).optional().default("system").describe("Color theme"),
     primaryColor: z.string().optional().describe("Primary color (hex code)"),
-    fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen")
+    fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen"),
+    // Enhanced dynamic content parameters
+    customData: z.record(z.any()).optional().describe("Custom data object with any additional configuration like metrics, product info, etc."),
+    images: z.array(z.object({
+      id: z.string(),
+      url: z.string(),
+      alt: z.string().optional(),
+      caption: z.string().optional(),
+      category: z.string().optional().describe("Category like 'product', 'hero', 'gallery', etc.")
+    })).optional().describe("Array of images to use in the template"),
+    textContent: z.record(z.string()).optional().describe("Custom text content for different sections"),
+    brandingConfig: z.object({
+      logoUrl: z.string().optional(),
+      brandName: z.string().optional(),
+      brandColors: z.array(z.string()).optional(),
+      fontFamily: z.string().optional()
+    }).optional().describe("Branding configuration for the template")
   }),
-  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen }) => {
+  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig }) => {
     try {
       const mcpClient = getMCPClient();
       
-      // Call the MCP server to generate the template
+      // Call the MCP server to generate the template with enhanced parameters
       const result = await mcpClient.callTool({
         name: 'generate_ui_template',
         arguments: {
@@ -51,7 +67,11 @@ const mcpUITool = tool({
           useCase,
           theme,
           primaryColor,
-          fullScreen
+          fullScreen,
+          customData,
+          images,
+          textContent,
+          brandingConfig
         }
       });
 
