@@ -629,7 +629,7 @@ const templateSchema = z.discriminatedUnion("templateType", [
 export const toolss = {
   generateDynamicUI: tool({
     description: "Generate a dynamic UI template to display information or collect data from the user",
-    parameters: templateSchema,
+    parameters: dataTableSchema,
     execute: async (templateConfig) => {
       return templateConfig
     },
