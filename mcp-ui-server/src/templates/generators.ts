@@ -2,10 +2,10 @@ import { templateSchemas, TemplateType } from "../schemas.js";
 import type { TemplateConfig } from "../schemas.js";
 
 export interface TemplateGenerator<T extends TemplateType> {
-  name: string;
-  description: string;
-  capabilities: string[];
-  useCases: string[];
+  // name: string; // Removed as per refactoring
+  // description: string; // Removed as per refactoring
+  // capabilities: string[]; // Removed as per refactoring
+  // useCases: string[]; // Removed as per refactoring
   generate(params: {
     title: string;
     description?: string;
@@ -28,23 +28,24 @@ export interface TemplateGenerator<T extends TemplateType> {
 }
 
 export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
-  name = "Dashboard Template";
-  description = "Interactive dashboards with metrics, charts, and activity feeds";
-  capabilities = [
-    "Real-time metrics display",
-    "Multiple chart types (line, bar, pie, area)",
-    "Recent activity feeds",
-    "Responsive grid layouts",
-    "Customizable color schemes"
-  ];
-  useCases = [
-    "Business analytics dashboards",
-    "Application monitoring",
-    "Financial reporting",
-    "Project management overviews",
-    "Marketing campaign tracking",
-    "Sales performance monitoring"
-  ];
+  // Static properties removed
+  // name = "Dashboard Template";
+  // description = "Interactive dashboards with metrics, charts, and activity feeds";
+  // capabilities = [
+  //   "Real-time metrics display",
+  //   "Multiple chart types (line, bar, pie, area)",
+  //   "Recent activity feeds",
+  //   "Responsive grid layouts",
+  //   "Customizable color schemes"
+  // ];
+  // useCases = [
+  //   "Business analytics dashboards",
+  //   "Application monitoring",
+  //   "Financial reporting",
+  //   "Project management overviews",
+  //   "Marketing campaign tracking",
+  //   "Sales performance monitoring"
+  // ];
 
   async generate(params: {
     title: string;
@@ -67,35 +68,78 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig } = params;
 
     // Generate default metrics based on use case and custom data
-    const defaultMetrics = this.generateMetrics(useCase, customData);
-    const defaultCharts = this.generateCharts(useCase, customData);
-    const defaultActivity = this.generateActivity(useCase, customData, images);
+    const generatedMetrics = this.generateMetrics(useCase, customData);
+    const generatedCharts = this.generateCharts(useCase, customData);
+    const generatedActivity = this.generateActivity(useCase, customData, images);
+    const generatedNavigation = this.generateNavigation(useCase, customData);
+    // Assuming widgets might not have a dedicated generator function unless specified,
+    // so direct customData access or customConfig is primary.
+    // const generatedWidgets = this.generateWidgets(useCase, customData); // If we had one
 
     return {
+      // Dynamically generated fields
+      name: params.textContent?.title || params.title || "Dynamic Dashboard",
+      description: params.textContent?.description || description || `${title} - Comprehensive dashboard with real-time metrics and insights`,
+      capabilities: params.customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: params.customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "dashboard",
       title,
-      description: description || `${title} - Comprehensive dashboard with real-time metrics and insights`,
+      // description: description || `${title} - Comprehensive dashboard with real-time metrics and insights`, // Original line, replaced by dynamic one
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || false,
       closeButtonText: "Close",
-      layout: customConfig?.layout || "grid",
-      metrics: customConfig?.metrics || defaultMetrics,
-      charts: customConfig?.charts || defaultCharts,
-      recentActivity: customConfig?.recentActivity || defaultActivity,
-      actionButtonText: customConfig?.actionButtonText || "Refresh Data",
+      layout: customConfig?.layout || customData?.layout || "grid",
+      metrics: customConfig?.metrics || customData?.metrics || generatedMetrics,
+      charts: customConfig?.charts || customData?.charts || generatedCharts,
+      recentActivity: customConfig?.recentActivity || customData?.recentActivity || generatedActivity,
+      actionButtonText: customConfig?.actionButtonText || customData?.actionButtonText || "Refresh Data",
       // Enhanced dynamic content
-      customData,
+      customData, // Keep customData for other potential uses
       images,
       textContent,
       brandingConfig,
       // New enhanced fields for dashboard
-      widgets: customConfig?.widgets,
-      navigation: customConfig?.navigation || this.generateNavigation(useCase)
+      widgets: customConfig?.widgets || customData?.widgets, // Added customData.widgets
+      navigation: customConfig?.navigation || customData?.navigation || generatedNavigation
     };
   }
 
+  private getDefaultCapabilities(useCase?: string): string[] {
+    // Example: Derive capabilities based on useCase or return defaults
+    const defaultCaps = [
+      "Real-time metrics display",
+      "Multiple chart types",
+      "Activity feeds",
+      "Responsive grid layouts",
+      "Customizable themes"
+    ];
+    if (useCase?.toLowerCase().includes("sales")) {
+      return [...defaultCaps, "Sales specific KPI tracking"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    // Example: Derive use cases or return defaults
+    const defaultCases = [
+      "Business analytics",
+      "Application monitoring",
+      "Reporting"
+    ];
+    if (useCase?.toLowerCase().includes("financial")) {
+      return [...defaultCases, "Financial performance tracking"];
+    }
+    return defaultCases;
+  }
+
   private generateMetrics(useCase?: string, customData?: Record<string, any>) {
+    // Prioritize metrics from customData
+    if (customData?.metrics && Array.isArray(customData.metrics) && customData.metrics.length > 0) {
+      return customData.metrics;
+    }
+
+    // Fallback to existing logic
     const baseMetrics = [
       {
         id: "total-users",
@@ -155,6 +199,12 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
   }
 
   private generateCharts(useCase?: string, customData?: Record<string, any>) {
+    // Prioritize charts from customData
+    if (customData?.charts && Array.isArray(customData.charts) && customData.charts.length > 0) {
+      return customData.charts;
+    }
+
+    // Fallback to existing logic
     return [
       {
         id: "revenue-chart",
@@ -189,6 +239,19 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
   }
 
   private generateActivity(useCase?: string, customData?: Record<string, any>, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>) {
+    // Prioritize recentActivity from customData
+    if (customData?.recentActivity && Array.isArray(customData.recentActivity) && customData.recentActivity.length > 0) {
+      // Optional: Map/validate items and potentially resolve icons or images if needed
+      return customData.recentActivity.map((activity: any) => ({
+        ...activity,
+        // Example: if icon is just a name, but we need to resolve it to a component or URL
+        // icon: resolveIcon(activity.icon),
+        // Example: if item has an imageId, resolve it from global images
+        // imageUrl: activity.imageId && images ? images.find(img => img.id === activity.imageId)?.url : activity.imageUrl
+      }));
+    }
+
+    // Fallback to existing logic
     return [
       {
         id: "activity-1",
@@ -214,7 +277,13 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
     ];
   }
 
-  private generateNavigation(useCase?: string) {
+  private generateNavigation(useCase?: string, customData?: Record<string, any>) {
+    // Prioritize navigation from customData
+    if (customData?.navigation && Array.isArray(customData.navigation) && customData.navigation.length > 0) {
+      return customData.navigation;
+    }
+
+    // Fallback to existing logic
     const baseNavigation = [
       { label: "Overview", icon: "Home", action: "overview" },
       { label: "Analytics", icon: "BarChart3", action: "analytics" },
@@ -243,27 +312,31 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
 }
 
 export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
-  name = "Data Table Template";
-  description = "Sortable, filterable data tables with pagination and advanced features";
-  capabilities = [
-    "Sortable columns",
-    "Advanced filtering",
-    "Pagination with customizable page sizes",
-    "Cell formatters (badges, images, actions)",
-    "Export functionality",
-    "Row selection"
-  ];
-  useCases = [
-    "User management interfaces",
-    "Product inventory listings",
-    "Transaction histories",
-    "Report data display",
-    "Content management systems",
-    "Analytics data presentation"
-  ];
+  // Static properties removed
+  // name = "Data Table Template";
+  // description = "Sortable, filterable data tables with pagination and advanced features";
+  // capabilities = [
+  //   "Sortable columns",
+  //   "Advanced filtering",
+  //   "Pagination with customizable page sizes",
+  //   "Cell formatters (badges, images, actions)",
+  //   "Export functionality",
+  //   "Row selection"
+  // ];
+  // useCases = [
+  //   "User management interfaces",
+  //   "Product inventory listings",
+  //   "Transaction histories",
+  //   "Report data display",
+  //   "Content management systems",
+  //   "Analytics data presentation"
+  // ];
 
   async generate(params: {
     title: string;
+    // Added customData, textContent for dynamic properties
+    customData?: Record<string, any>;
+    textContent?: Record<string, string>;
     description?: string;
     useCase?: string;
     customConfig?: any;
@@ -271,33 +344,74 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
     primaryColor?: string;
     fullScreen?: boolean;
   }): Promise<TemplateConfig<"dataTable">> {
-    const { title, description, useCase, customConfig, theme, primaryColor, fullScreen } = params;
+    const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, textContent } = params; // Added customData, textContent
 
-    const defaultColumns = this.generateColumns(useCase);
-    const defaultData = this.generateData(defaultColumns, useCase);
-    const defaultFilters = this.generateFilters(useCase);
+    // Pass customData to helper functions
+    const generatedColumns = this.generateColumns(useCase, customData);
+    // generateData might depend on columns, so it's called after columns are resolved.
+    // If customData.data is provided, it should ideally be used directly.
+    const generatedData = this.generateData(customConfig?.columns || customData?.columns || generatedColumns, useCase, customData);
+    const generatedFilters = this.generateFilters(useCase, customData);
+
+    const paginationConfig = {
+      enabled: true,
+      pageSize: 10,
+      pageSizeOptions: [5, 10, 20, 50],
+      ...(customConfig?.pagination), // Allow customConfig to override parts of pagination
+      ...(customData?.pagination) // Allow customData to override parts of pagination
+    };
 
     return {
+      // Dynamically generated fields
+      name: textContent?.title || params.title || "Dynamic Data Table",
+      description: textContent?.description || description || `${title} - Comprehensive data table with sorting and filtering`,
+      capabilities: customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "dataTable",
       title,
-      description: description || `${title} - Comprehensive data table with sorting and filtering`,
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || false,
-      closeButtonText: "Close",
-      columns: customConfig?.columns || defaultColumns,
-      data: customConfig?.data || defaultData,
-      pagination: {
-        enabled: true,
-        pageSize: 10,
-        pageSizeOptions: [5, 10, 20, 50]
-      },
-      filters: customConfig?.filters || defaultFilters,
-      actionButtonText: "Export Data"
+      closeButtonText: customData?.closeButtonText || textContent?.closeButtonText || "Close",
+      columns: customConfig?.columns || customData?.columns || generatedColumns,
+      data: customConfig?.data || customData?.data || generatedData,
+      pagination: paginationConfig,
+      filters: customConfig?.filters || customData?.filters || generatedFilters,
+      actionButtonText: customData?.actionButtonText || textContent?.actionButtonText || "Export Data"
     };
   }
 
-  private generateColumns(useCase?: string) {
+  private getDefaultCapabilities(useCase?: string): string[] {
+    const defaultCaps = [
+      "Sortable columns",
+      "Advanced filtering",
+      "Pagination",
+      "Cell formatters",
+      "Export functionality",
+      "Row selection"
+    ];
+    if (useCase?.toLowerCase().includes("inventory")) {
+      return [...defaultCaps, "Batch actions", "Stock level indicators"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    const defaultCases = [
+      "Data display",
+      "Management interfaces",
+      "Reporting"
+    ];
+    if (useCase?.toLowerCase().includes("user")) {
+      return [...defaultCases, "User listings", "Admin panels"];
+    }
+    return defaultCases;
+  }
+
+  private generateColumns(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.columns && Array.isArray(customData.columns) && customData.columns.length > 0) {
+      return customData.columns;
+    }
     if (useCase?.toLowerCase().includes("user")) {
       return [
         { id: "id", header: "ID", accessorKey: "id", enableSorting: true },
@@ -337,7 +451,11 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
     ];
   }
 
-  private generateData(columns: any[], useCase?: string) {
+  private generateData(columns: any[], useCase?: string, customData?: Record<string, any>) {
+    if (customData?.data && Array.isArray(customData.data) && customData.data.length > 0) {
+      return customData.data;
+    }
+
     const rowCount = 25;
     const data = [];
 
@@ -374,7 +492,10 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
     return data;
   }
 
-  private generateFilters(useCase?: string) {
+  private generateFilters(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.filters && Array.isArray(customData.filters) && customData.filters.length > 0) {
+      return customData.filters;
+    }
     return [
       {
         id: "status",
@@ -402,24 +523,25 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
 }
 
 export class ProductCatalogGenerator implements TemplateGenerator<"productCatalog"> {
-  name = "Product Catalog Template";
-  description = "E-commerce style product listings with filtering and sorting";
-  capabilities = [
-    "Grid and list view layouts",
-    "Product filtering by category and attributes",
-    "Price sorting and filtering",
-    "Product ratings and reviews",
-    "Stock status indicators",
-    "Product badges and labels"
-  ];
-  useCases = [
-    "E-commerce product listings",
-    "Digital marketplace catalogs",
-    "Service offering displays",
-    "Portfolio showcases",
-    "Resource libraries",
-    "Course catalogs"
-  ];
+  // Static properties removed
+  // name = "Product Catalog Template";
+  // description = "E-commerce style product listings with filtering and sorting";
+  // capabilities = [
+  //   "Grid and list view layouts",
+  //   "Product filtering by category and attributes",
+  //   "Price sorting and filtering",
+  //   "Product ratings and reviews",
+  //   "Stock status indicators",
+  //   "Product badges and labels"
+  // ];
+  // useCases = [
+  //   "E-commerce product listings",
+  //   "Digital marketplace catalogs",
+  //   "Service offering displays",
+  //   "Portfolio showcases",
+  //   "Resource libraries",
+  //   "Course catalogs"
+  // ];
 
   async generate(params: {
     title: string;
@@ -445,9 +567,14 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
     const defaultCategories = this.generateCategories(useCase, customData);
 
     return {
+      // Dynamically generated fields
+      name: params.textContent?.title || params.title || "Dynamic Product Catalog",
+      description: params.textContent?.description || description || `${title} - Discover and browse our product collection`,
+      capabilities: params.customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: params.customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "productCatalog",
       title,
-      description: description || `${title} - Discover and browse our product collection`,
+      // description: description || `${title} - Discover and browse our product collection`, // Original line
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || false,
@@ -469,11 +596,57 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
     };
   }
 
+  private getDefaultCapabilities(useCase?: string): string[] {
+    const defaultCaps = [
+      "Grid and list view layouts",
+      "Product filtering",
+      "Sorting options",
+      "Product ratings and reviews",
+      "Stock status",
+      "Product badges"
+    ];
+    if (useCase?.toLowerCase().includes("ebook")) {
+      return [...defaultCaps, "Digital downloads", "Author pages"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    const defaultCases = [
+      "E-commerce listings",
+      "Marketplace catalogs",
+      "Service displays"
+    ];
+    if (useCase?.toLowerCase().includes("course")) {
+      return [...defaultCases, "Online course offerings", "Learning platforms"];
+    }
+    return defaultCases;
+  }
+
   private generateProducts(useCase?: string, customData?: Record<string, any>, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>) {
-    // Use provided images for products if available
+    // Prioritize fully custom product list from customData.products
+    if (customData?.products && Array.isArray(customData.products) && customData.products.length > 0) {
+      return customData.products.map((product: any) => ({
+        id: product.id || `prod-${Math.random().toString(36).substr(2, 9)}`,
+        name: product.name || "Unnamed Product",
+        description: product.description || "No description available.",
+        price: typeof product.price === 'number' ? product.price : 0,
+        currency: product.currency || "USD",
+        imageUrl: product.imageUrl || (images?.find(img => img.id === product.id || img.category === product.category)?.url) || "/placeholder.jpg?height=300&width=300",
+        images: product.images || (images?.filter(img => img.category === product.category || product.imageIds?.includes(img.id)).map(img => img.url)) || [],
+        rating: typeof product.rating === 'number' ? product.rating : 0,
+        reviewCount: typeof product.reviewCount === 'number' ? product.reviewCount : 0,
+        badges: product.badges || [],
+        category: product.category || "Uncategorized",
+        inStock: typeof product.inStock === 'boolean' ? product.inStock : true,
+        ...product.customFields // Spread any additional custom fields
+      }));
+    }
+
+    // Fallback to existing semi-dynamic/hardcoded logic
     const productImages = images?.filter(img => img.category === 'product') || [];
     
-    const products = [
+    const defaultProducts = [
       {
         id: "prod-1",
         name: customData?.productNames?.[0] || "Premium Wireless Headphones",
@@ -494,7 +667,7 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
         description: "Advanced fitness tracker with heart rate monitoring and GPS functionality.",
         price: 199.99,
         currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
+        imageUrl: productImages[1]?.url || "/placeholder.jpg?height=300&width=300", // Use different image
         rating: 4.6,
         badges: ["New"],
         category: "Electronics",
@@ -506,7 +679,7 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
         description: "Comfortable ergonomic office chair with lumbar support and adjustable height.",
         price: 449.99,
         currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
+        imageUrl: productImages[2]?.url || "/placeholder.jpg?height=300&width=300", // Use different image
         rating: 4.7,
         badges: ["Popular"],
         category: "Furniture",
@@ -518,7 +691,7 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
         description: "High-performance camera lens for professional photography and videography.",
         price: 899.99,
         currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
+        imageUrl: productImages[3]?.url || "/placeholder.jpg?height=300&width=300", // Use different image
         rating: 4.9,
         badges: ["Professional"],
         category: "Photography",
@@ -527,7 +700,7 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
     ];
 
     if (useCase?.toLowerCase().includes("digital")) {
-      return products.map(p => ({
+      return defaultProducts.map(p => ({
         ...p,
         name: `Digital ${p.name}`,
         description: `Digital version of ${p.description}`,
@@ -535,10 +708,22 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
       }));
     }
 
-    return products;
+    return defaultProducts;
   }
 
   private generateCategories(useCase?: string, customData?: Record<string, any>) {
+    // Prioritize fully custom category list from customData.categories
+    if (customData?.categories && Array.isArray(customData.categories) && customData.categories.length > 0) {
+      return customData.categories.map((category: any) => ({
+        id: category.id || `cat-${Math.random().toString(36).substr(2, 9)}`,
+        name: category.name || "Unnamed Category",
+        imageUrl: category.imageUrl || undefined,
+        description: category.description || undefined,
+        count: typeof category.count === 'number' ? category.count : 0 // Optional: LLM can provide count
+      }));
+    }
+
+    // Fallback to existing semi-dynamic/hardcoded logic
     const categoryImages = customData?.categoryImages || [];
     const categoryNames = customData?.categoryNames || [];
     
@@ -574,35 +759,36 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
 // For brevity, I'll create a few more key ones
 
 export class FormGenerator implements TemplateGenerator<"form"> {
-  name = "Universal Form Template";
-  description = "Completely flexible forms supporting any field types, layouts, and configurations";
-  capabilities = [
-    "Any field types (text, select, checkbox, radio, file, etc.)",
-    "Multi-step wizard forms",
-    "Single-page forms",
-    "Custom validation rules",
-    "Conditional field logic",
-    "Dynamic field options",
-    "Custom styling and branding",
-    "Progress indicators",
-    "File uploads and previews",
-    "Custom field layouts",
-    "Gaming/tournament forms",
-    "Registration forms",
-    "Survey forms",
-    "Application forms"
-  ];
-  useCases = [
-    "Gaming tournament registration",
-    "User registration",
-    "Survey and feedback",
-    "Job applications",
-    "Event registration",
-    "Contact forms",
-    "Order forms",
-    "Profile setup",
-    "Custom business forms"
-  ];
+  // Static properties removed
+  // name = "Universal Form Template";
+  // description = "Completely flexible forms supporting any field types, layouts, and configurations";
+  // capabilities = [
+  //   "Any field types (text, select, checkbox, radio, file, etc.)",
+  //   "Multi-step wizard forms",
+  //   "Single-page forms",
+  //   "Custom validation rules",
+  //   "Conditional field logic",
+  //   "Dynamic field options",
+  //   "Custom styling and branding",
+  //   "Progress indicators",
+  //   "File uploads and previews",
+  //   "Custom field layouts",
+  //   "Gaming/tournament forms",
+  //   "Registration forms",
+  //   "Survey forms",
+  //   "Application forms"
+  // ];
+  // useCases = [
+  //   "Gaming tournament registration",
+  //   "User registration",
+  //   "Survey and feedback",
+  //   "Job applications",
+  //   "Event registration",
+  //   "Contact forms",
+  //   "Order forms",
+  //   "Profile setup",
+  //   "Custom business forms"
+  // ];
 
   async generate(params: {
     title: string;
@@ -634,9 +820,14 @@ export class FormGenerator implements TemplateGenerator<"form"> {
     const sections = customConfig?.sections || customData?.sections || this.generateSections(useCase, customData);
 
     return {
+      // Dynamically generated fields
+      name: params.textContent?.title || params.title || "Dynamic Form",
+      description: params.textContent?.description || description || `${title} - Please fill out the form below`,
+      capabilities: params.customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: params.customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "form",
       title,
-      description: description || textContent?.description || `${title} - Please fill out the form below`,
+      // description: description || textContent?.description || `${title} - Please fill out the form below`, // Original line
       theme: theme || "system",
       primaryColor: primaryColor || brandingConfig?.colors?.primary,
       fullScreen: fullScreen || false,
@@ -679,7 +870,41 @@ export class FormGenerator implements TemplateGenerator<"form"> {
     };
   }
 
+  private getDefaultCapabilities(useCase?: string): string[] {
+    const defaultCaps = [
+      "Flexible field types",
+      "Multi-step/single-page forms",
+      "Custom validation",
+      "Conditional logic",
+      "File uploads",
+      "Custom styling"
+    ];
+    if (useCase?.toLowerCase().includes("survey")) {
+      return [...defaultCaps, "Rating scales", "Matrix questions"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    const defaultCases = [
+      "Registrations",
+      "Surveys",
+      "Applications",
+      "Contact forms"
+    ];
+    if (useCase?.toLowerCase().includes("gaming")) {
+      return [...defaultCases, "Tournament sign-ups", "Team registrations"];
+    }
+    return defaultCases;
+  }
+
   private generateSections(useCase?: string, customData?: Record<string, any>) {
+    // Prioritize fully custom form structure from customData.formSections
+    if (customData?.formSections && Array.isArray(customData.formSections) && customData.formSections.length > 0) {
+      return customData.formSections;
+    }
+
+    // Fallback to existing useCase-based logic
     // Gaming tournament registration form
     if (useCase?.toLowerCase().includes("gaming") || useCase?.toLowerCase().includes("tournament")) {
       return [
@@ -991,27 +1216,31 @@ export class FormGenerator implements TemplateGenerator<"form"> {
 }
 
 export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
-  name = "Analytics Dashboard Template";
-  description = "Comprehensive analytics dashboards with KPIs, charts, and insights";
-  capabilities = [
-    "KPI tracking and monitoring",
-    "Multiple chart types with insights",
-    "Time range selection",
-    "Audience segmentation",
-    "Goal tracking",
-    "Performance comparisons"
-  ];
-  useCases = [
-    "Website analytics dashboards",
-    "Marketing campaign analysis",
-    "Sales performance tracking",
-    "User behavior analysis",
-    "Financial reporting",
-    "Product usage analytics"
-  ];
+  // Static properties removed
+  // name = "Analytics Dashboard Template";
+  // description = "Comprehensive analytics dashboards with KPIs, charts, and insights";
+  // capabilities = [
+  //   "KPI tracking and monitoring",
+  //   "Multiple chart types with insights",
+  //   "Time range selection",
+  //   "Audience segmentation",
+  //   "Goal tracking",
+  //   "Performance comparisons"
+  // ];
+  // useCases = [
+  //   "Website analytics dashboards",
+  //   "Marketing campaign analysis",
+  //   "Sales performance tracking",
+  //   "User behavior analysis",
+  //   "Financial reporting",
+  //   "Product usage analytics"
+  // ];
 
   async generate(params: {
     title: string;
+    // Added customData, textContent for dynamic properties
+    customData?: Record<string, any>;
+    textContent?: Record<string, string>;
     description?: string;
     useCase?: string;
     customConfig?: any;
@@ -1019,35 +1248,79 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
     primaryColor?: string;
     fullScreen?: boolean;
   }): Promise<TemplateConfig<"analytics">> {
-    const { title, description, useCase, customConfig, theme, primaryColor, fullScreen } = params;
+    const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, textContent } = params;
+
+    const generatedKPIs = this.generateKPIs(useCase, customData);
+    const generatedCharts = this.generateCharts(useCase, customData);
+    const generatedSegments = this.generateSegments(useCase, customData);
+    const generatedGoals = this.generateGoals(useCase, customData);
+
+    const timeRangeConfig = {
+      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      end: new Date().toISOString(),
+      presets: [
+        { label: "Last 7 days", value: "7d" },
+        { label: "Last 30 days", value: "30d" },
+        { label: "Last 90 days", value: "90d" },
+        { label: "Last 12 months", value: "12m" }
+      ],
+      ...(customConfig?.timeRange),
+      ...(customData?.timeRange)
+    };
 
     return {
+      // Dynamically generated fields
+      name: textContent?.title || params.title || "Dynamic Analytics Dashboard",
+      description: textContent?.description || description || `${title} - Comprehensive analytics and insights`,
+      capabilities: customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "analytics",
       title,
-      description: description || `${title} - Comprehensive analytics and insights`,
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || true, // Analytics often work better full screen
-      closeButtonText: "Close",
-      timeRange: {
-        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        end: new Date().toISOString(),
-        presets: [
-          { label: "Last 7 days", value: "7d" },
-          { label: "Last 30 days", value: "30d" },
-          { label: "Last 90 days", value: "90d" },
-          { label: "Last 12 months", value: "12m" }
-        ]
-      },
-      kpis: this.generateKPIs(useCase),
-      charts: this.generateCharts(useCase),
-      segments: this.generateSegments(useCase),
-      goals: this.generateGoals(useCase),
-      actionButtonText: "Generate Report"
+      closeButtonText: customData?.closeButtonText || textContent?.closeButtonText || "Close",
+      timeRange: timeRangeConfig,
+      kpis: customConfig?.kpis || customData?.kpis || generatedKPIs,
+      charts: customConfig?.charts || customData?.charts || generatedCharts,
+      segments: customConfig?.segments || customData?.segments || generatedSegments,
+      goals: customConfig?.goals || customData?.goals || generatedGoals,
+      actionButtonText: customData?.actionButtonText || textContent?.actionButtonText || "Generate Report"
     };
   }
 
-  private generateKPIs(useCase?: string) {
+  private getDefaultCapabilities(useCase?: string): string[] {
+    const defaultCaps = [
+      "KPI tracking",
+      "Chart visualizations",
+      "Time range filtering",
+      "Audience segmentation",
+      "Goal tracking",
+      "Performance comparisons"
+    ];
+    if (useCase?.toLowerCase().includes("ecommerce")) {
+      return [...defaultCaps, "Sales funnels", "Product performance"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    const defaultCases = [
+      "Website analytics",
+      "Marketing analysis",
+      "Sales tracking",
+      "User behavior"
+    ];
+    if (useCase?.toLowerCase().includes("finance")) {
+      return [...defaultCases, "Financial performance overview", "Budget tracking"];
+    }
+    return defaultCases;
+  }
+
+  private generateKPIs(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.kpis && Array.isArray(customData.kpis) && customData.kpis.length > 0) {
+      return customData.kpis;
+    }
     return [
       {
         id: "visitors",
@@ -1091,7 +1364,10 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
     ];
   }
 
-  private generateCharts(useCase?: string) {
+  private generateCharts(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.charts && Array.isArray(customData.charts) && customData.charts.length > 0) {
+      return customData.charts;
+    }
     return [
       {
         id: "traffic-trend",
@@ -1134,7 +1410,10 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
     ];
   }
 
-  private generateSegments(useCase?: string) {
+  private generateSegments(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.segments && Array.isArray(customData.segments) && customData.segments.length > 0) {
+      return customData.segments;
+    }
     return [
       {
         id: "new-users",
@@ -1160,7 +1439,10 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
     ];
   }
 
-  private generateGoals(useCase?: string) {
+  private generateGoals(useCase?: string, customData?: Record<string, any>) {
+    if (customData?.goals && Array.isArray(customData.goals) && customData.goals.length > 0) {
+      return customData.goals;
+    }
     return [
       {
         id: "monthly-revenue",
@@ -1183,24 +1465,25 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
 }
 
 export class GalleryGenerator implements TemplateGenerator<"gallery"> {
-  name = "Gallery Template";
-  description = "Image galleries with lightbox, filtering, and various layout options";
-  capabilities = [
-    "Multiple layout types (grid, masonry, carousel)",
-    "Image lightbox functionality",
-    "Category-based filtering",
-    "Metadata display",
-    "Responsive image handling",
-    "Custom image URLs"
-  ];
-  useCases = [
-    "Photography portfolios",
-    "Product showcases",
-    "Event photo galleries",
-    "Art collections",
-    "Travel photography",
-    "Real estate listings"
-  ];
+  // Static properties removed
+  // name = "Gallery Template";
+  // description = "Image galleries with lightbox, filtering, and various layout options";
+  // capabilities = [
+  //   "Multiple layout types (grid, masonry, carousel)",
+  //   "Image lightbox functionality",
+  //   "Category-based filtering",
+  //   "Metadata display",
+  //   "Responsive image handling",
+  //   "Custom image URLs"
+  // ];
+  // useCases = [
+  //   "Photography portfolios",
+  //   "Product showcases",
+  //   "Event photo galleries",
+  //   "Art collections",
+  //   "Travel photography",
+  //   "Real estate listings"
+  // ];
 
   async generate(params: {
     title: string;
@@ -1223,40 +1506,103 @@ export class GalleryGenerator implements TemplateGenerator<"gallery"> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig } = params;
 
     // Generate gallery items using provided images if available
-    const defaultItems = this.generateGalleryItems(useCase, images, customData, brandingConfig);
-    const defaultCategories = this.generateCategories(useCase, images, customData);
+    const generatedItems = this.generateGalleryItems(useCase, images, customData, brandingConfig);
+    // Categories should be generated based on the items if not provided directly
+    const generatedCategories = this.generateCategories(useCase, images, customData, customConfig?.items || customData?.items || generatedItems);
+    // Filters should be based on the final categories
+    const finalCategories = customConfig?.categories || customData?.categories || generatedCategories;
+    const generatedFilters = this.generateFilters(finalCategories); // Pass final categories to generateFilters
 
     return {
+      // Dynamically generated fields
+      name: params.textContent?.title || params.title || "Dynamic Image Gallery",
+      description: params.textContent?.description || description || `${title} - A curated collection of stunning imagery`,
+      capabilities: params.customData?.capabilities || this.getDefaultCapabilities(params.useCase),
+      useCases: params.customData?.useCases || this.getDefaultUseCases(params.useCase),
       templateType: "gallery",
       title,
-      description: description || `${title} - A curated collection of stunning imagery`,
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || false,
-      closeButtonText: "Close",
-      layout: customConfig?.layout || "grid",
-      items: customConfig?.items || defaultItems,
-      categories: customConfig?.categories || defaultCategories,
-      lightbox: customConfig?.lightbox !== false,
-      columns: customConfig?.columns || 3,
-      aspectRatio: customConfig?.aspectRatio || "auto",
-      spacing: customConfig?.spacing || 4,
-      filters: customConfig?.filters || this.generateFilters(defaultCategories),
-      sortOptions: customConfig?.sortOptions || [
+      closeButtonText: customData?.closeButtonText || params.textContent?.closeButtonText || "Close",
+      layout: customConfig?.layout || customData?.layout || "grid",
+      items: customConfig?.items || customData?.items || generatedItems,
+      categories: finalCategories,
+      lightbox: customConfig?.lightbox ?? customData?.lightbox ?? true,
+      columns: customConfig?.columns || customData?.columns || 3,
+      aspectRatio: customConfig?.aspectRatio || customData?.aspectRatio || "auto",
+      spacing: customConfig?.spacing || customData?.spacing || 4,
+      filters: customConfig?.filters || customData?.filters || generatedFilters,
+      sortOptions: customConfig?.sortOptions || customData?.sortOptions || [
         { label: "Date", value: "date" },
         { label: "Title", value: "title" },
         { label: "Category", value: "category" }
       ],
       // Enhanced dynamic content
-      customData,
+      customData, // Keep customData for other potential uses
       images,
       textContent,
       brandingConfig
     };
   }
 
-  private generateGalleryItems(useCase?: string, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>, customData?: Record<string, any>, brandingConfig?: { logoUrl?: string; brandName?: string; brandColors?: string[]; fontFamily?: string }) {
-    // Use provided images if available
+  private getDefaultCapabilities(useCase?: string): string[] {
+    const defaultCaps = [
+      "Multiple layout options (grid, masonry, carousel)",
+      "Image lightbox",
+      "Category filtering",
+      "Metadata display",
+      "Responsive images"
+    ];
+    if (useCase?.toLowerCase().includes("portfolio")) {
+      return [...defaultCaps, "Artist bios", "Social sharing"];
+    }
+    return defaultCaps;
+  }
+
+  private getDefaultUseCases(useCase?: string): string[] {
+    const defaultCases = [
+      "Photography display",
+      "Product showcases",
+      "Event galleries",
+      "Art collections"
+    ];
+    if (useCase?.toLowerCase().includes("real estate")) {
+      return [...defaultCases, "Property listings", "Virtual tours (image-based)"];
+    }
+    return defaultCases;
+  }
+
+  private generateGalleryItems(
+    useCase?: string,
+    images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>,
+    customData?: Record<string, any>,
+    brandingConfig?: { logoUrl?: string; brandName?: string; brandColors?: string[]; fontFamily?: string }
+  ) {
+    // Prioritize items from customData
+    if (customData?.items && Array.isArray(customData.items) && customData.items.length > 0) {
+      return customData.items.map((item: any) => ({
+        id: item.id || `item-${Math.random().toString(36).substr(2, 9)}`,
+        title: item.title || "Untitled Image",
+        description: item.description || "",
+        imageUrl: item.imageUrl || "/placeholder.jpg?height=400&width=600",
+        thumbnailUrl: item.thumbnailUrl || item.imageUrl || "/placeholder.jpg?height=200&width=300",
+        highResUrl: item.highResUrl || item.imageUrl || "/placeholder.jpg?height=800&width=1200",
+        category: item.category || "uncategorized",
+        tags: item.tags || [],
+        date: item.date || new Date().toISOString(),
+        author: item.author || brandingConfig?.brandName || "Unknown Artist",
+        location: item.location || "Unknown Location",
+        dimensions: item.dimensions || { width: 0, height: 0 },
+        metadata: item.metadata || {},
+        likes: item.likes || 0,
+        views: item.views || 0,
+        socialShare: item.socialShare ?? true,
+        ...item.customFields
+      }));
+    }
+
+    // Fallback: Use provided global images parameter if available
     if (images && images.length > 0) {
       return images.map((image, index) => ({
         id: image.id || `image-${index + 1}`,
@@ -1303,20 +1649,49 @@ export class GalleryGenerator implements TemplateGenerator<"gallery"> {
     }));
   }
 
-  private generateCategories(useCase?: string, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>, customData?: Record<string, any>) {
-    // Extract categories from provided images
-    if (images && images.length > 0) {
-      const categories = [...new Set(images.map(img => img.category).filter(Boolean))];
-      return categories.map((cat, index) => ({
-        id: cat!.toLowerCase().replace(/\s+/g, '-'),
-        name: cat!,
-        imageUrl: images.find(img => img.category === cat)?.url,
-        description: customData?.categoryDescriptions?.[cat!] || `Stunning ${cat} photography`,
-        count: images.filter(img => img.category === cat).length
+  private generateCategories(
+    useCase?: string,
+    // Global images param can still be used if customData.items doesn't have enough category info
+    globalImages?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>,
+    customData?: Record<string, any>,
+    // Pass generated/provided items to extract categories if customData.categories is not set
+    itemsToCategorize?: Array<any>
+  ) {
+    // Prioritize categories from customData
+    if (customData?.categories && Array.isArray(customData.categories) && customData.categories.length > 0) {
+      return customData.categories.map((cat: any) => ({
+        id: cat.id || cat.name?.toLowerCase().replace(/\s+/g, '-') || `cat-${Math.random().toString(36).substr(2, 9)}`,
+        name: cat.name || "Unnamed Category",
+        imageUrl: cat.imageUrl,
+        description: cat.description,
+        count: cat.count || (itemsToCategorize ? itemsToCategorize.filter(item => item.category === cat.name || item.category === cat.id).length : 0)
       }));
     }
 
-    // Default categories based on use case
+    // Fallback: Extract categories from itemsToCategorize (which could be from customData.items or generated)
+    const sourceForCategories = itemsToCategorize || globalImages;
+    if (sourceForCategories && sourceForCategories.length > 0) {
+      const categoriesMap = new Map<string, { id: string; name: string; imageUrl?: string; description?: string; count: number }>();
+      sourceForCategories.forEach(item => {
+        const categoryName = item.category;
+        if (categoryName && typeof categoryName === 'string') {
+          if (!categoriesMap.has(categoryName)) {
+            categoriesMap.set(categoryName, {
+              id: categoryName.toLowerCase().replace(/\s+/g, '-'),
+              name: categoryName,
+              // Attempt to find an image for the category from the first item in that category
+              imageUrl: item.imageUrl || item.thumbnailUrl,
+              description: `Content related to ${categoryName}`,
+              count: 0
+            });
+          }
+          categoriesMap.get(categoryName)!.count++;
+        }
+      });
+      if (categoriesMap.size > 0) return Array.from(categoriesMap.values());
+    }
+
+    // Default categories based on use case (last resort)
     if (useCase?.toLowerCase().includes("landscape") || useCase?.toLowerCase().includes("nature")) {
       return [
         { id: "mountains", name: "Mountains", description: "Majestic mountain landscapes", count: 12 },
@@ -1333,7 +1708,10 @@ export class GalleryGenerator implements TemplateGenerator<"gallery"> {
     ];
   }
 
-  private generateFilters(categories: any[]) {
+  private generateFilters(categories: any[] = []) { // Ensure categories can be empty
+    if (categories.length === 0) {
+      return []; // No filters if no categories
+    }
     return [
       {
         id: "category",
