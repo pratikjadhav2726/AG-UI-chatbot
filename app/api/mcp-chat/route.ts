@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateText, tool, CoreMessage } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic'
+import { bedrock } from '@ai-sdk/amazon-bedrock'
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
 
@@ -202,8 +203,20 @@ export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
 
+    // Configure Bedrock with proper credential provider
+    const bedrockConfig = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY 
+      ? {
+          region: process.env.AWS_REGION || 'us-east-1',
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : {
+          region: process.env.AWS_REGION || 'us-east-1',
+          credentialProvider: fromNodeProviderChain(),
+        };
+
     const completion = await generateText({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: bedrock('anthropic.claude-4-sonnet-20250514-v1:0', bedrockConfig),
       messages,
       tools: {
         generateUITemplate: mcpUITool,
@@ -212,7 +225,7 @@ export async function POST(req: NextRequest) {
       },
       toolChoice: 'auto',
       temperature: 0.7,
-      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. 
+      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. You are powered by Claude 4 Sonnet via Amazon Bedrock. 
 
 CAPABILITIES:
 - Generate 20+ different types of UI templates (dashboards, forms, tables, analytics, etc.)

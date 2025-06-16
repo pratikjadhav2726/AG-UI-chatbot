@@ -1,6 +1,6 @@
 # Generative UI Chatbot with MCP Server
 
-A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP) and Anthropic's Claude Sonnet model. The system features a sophisticated MCP server that can generate over 20 different types of UI templates with realistic data and configurations.
+A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP) and Anthropic's Claude Sonnet model via Amazon Bedrock. The system features a sophisticated MCP server that can generate over 20 different types of UI templates with realistic data and configurations.
 
 ![image](https://github.com/user-attachments/assets/c17ec7aa-f345-442c-a4e1-2f9e8d439f8f)
 
@@ -18,7 +18,7 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
 - **Type Safety**: Comprehensive Zod schemas for all template configurations
 
 ### Chatbot Interface
-- **Natural Language Processing**: Powered by Anthropic's Claude Sonnet 3.5
+- **Natural Language Processing**: Powered by Anthropic's Claude Sonnet 3.5 via Amazon Bedrock
 - **Interactive UI**: Real-time template generation and preview
 - **Template Suggestions**: Smart recommendations based on user context
 - **Conversation History**: Persistent chat history with template results
@@ -34,9 +34,13 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
 
 ## 🛠 Setup Instructions
 
+> **📋 Migration Note**: This project has been updated to use Amazon Bedrock instead of the direct Anthropic API. See [BEDROCK_MIGRATION.md](./BEDROCK_MIGRATION.md) for migration details.
+
 ### Prerequisites
 - Node.js 18+ and npm/pnpm
-- Anthropic API key ([Get one here](https://console.anthropic.com/))
+- AWS Account with Bedrock access
+- Claude 4 Sonnet model enabled in your AWS Bedrock account
+- AWS credentials configured (access keys, AWS profile, or IAM role)
 
 ### Installation
 
@@ -50,10 +54,27 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
    cp .env.example .env.local
    ```
    
-   Add your Anthropic API key to `.env.local`:
+   Add your AWS credentials to `.env.local`:
    ```bash
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   AWS_ACCESS_KEY_ID=your_aws_access_key_id
+   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+   AWS_REGION=us-east-1
    ```
+   
+   **Alternative**: The application automatically uses AWS credential provider chain:
+   ```bash
+   # For EC2 instances with IAM roles, only region needed
+   AWS_REGION=us-east-1
+   ```
+   
+   The credential provider chain automatically discovers credentials from:
+   - Environment variables
+   - AWS credentials file (~/.aws/credentials)  
+   - IAM roles for EC2 instances
+   - ECS task roles
+   - And more AWS credential sources
+   
+   **Important**: Make sure you have access to Claude 4 Sonnet in your AWS Bedrock account. You may need to request model access in the AWS Bedrock console.
 
 3. **Build and Start MCP Server**
    ```bash
@@ -129,10 +150,11 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
    - Run `npm run build` before `npm start`
    - Check for TypeScript compilation errors
 
-2. **Anthropic API Errors**
-   - Verify your API key in `.env.local`
-   - Check API key permissions and credits
-   - Ensure network connectivity
+2. **Bedrock API Errors**
+   - Verify your AWS credentials are configured correctly
+   - Check that you have access to Claude 4 Sonnet in AWS Bedrock
+   - Ensure your AWS region supports Bedrock (us-east-1, us-west-2, etc.)
+   - Verify you have the necessary IAM permissions for Bedrock
 
 3. **Template Not Rendering**
    - Check if template component exists in `components/templates/`
@@ -144,9 +166,9 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
 The system consists of two main components:
 
 1. **MCP Server** (`mcp-ui-server/`): A TypeScript server that implements the Model Context Protocol to generate UI template configurations with realistic data
-2. **Next.js Chatbot** (`/`): A React application with Anthropic Claude integration that provides a conversational interface for template generation
+2. **Next.js Chatbot** (`/`): A React application with Amazon Bedrock integration that provides a conversational interface for template generation
 
-The chatbot uses Claude Sonnet to understand user requests and translate them into MCP tool calls, which generate rich UI templates that are then rendered as React components.
+The chatbot uses Claude 4 Sonnet via Amazon Bedrock to understand user requests and translate them into MCP tool calls, which generate rich UI templates that are then rendered as React components.
 
 ## 📝 License
 
