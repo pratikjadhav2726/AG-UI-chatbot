@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -19,7 +19,7 @@ COPY . .
 
 # Build MCP server first
 WORKDIR /app/mcp-ui-server
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 RUN npm run build
 
 # Build Next.js application
