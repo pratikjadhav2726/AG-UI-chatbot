@@ -90,7 +90,7 @@ export class GenerativeUiChatStack extends cdk.Stack {
       serviceName: `generative-ui-chat-${props.environment}`,
       cpu: 1024, // 1 vCPU
       memoryLimitMiB: 2048, // 2 GB RAM
-      desiredCount: 2, // For high availability
+      desiredCount: 2, // Explicitly set desired count for CDK v2
       taskImageOptions: {
         image: ecs.ContainerImage.fromAsset('..', {
           file: 'Dockerfile',
