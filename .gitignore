@@ -37,7 +37,19 @@ next-env.d.ts
 mcp-ui-server/node_modules/
 mcp-ui-server/dist/
 
+# CDK specific
+cdk/node_modules/
+cdk/cdk.out/
+cdk/lib/*.js
+cdk/lib/*.d.ts
+cdk/bin/*.js
+cdk/bin/*.d.ts
+cdk/package-lock.json
+
 # Test and temporary files
 **/*-test.*
 **/*-clean.*
 **/schemas-test.*
+
+# Docker
+.dockerignore
