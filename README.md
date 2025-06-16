@@ -32,9 +32,50 @@ A comprehensive chatbot application that generates dynamic UI templates using Mo
 - **Loading States**: Smooth loading animations and error handling
 - **Accessibility**: WCAG compliant components throughout
 
-## 🛠 Setup Instructions
+## 🚀 Deployment
 
-> **📋 Migration Note**: This project has been updated to use Amazon Bedrock instead of the direct Anthropic API. See [BEDROCK_MIGRATION.md](./BEDROCK_MIGRATION.md) for migration details.
+### Local Development
+```bash
+# Start MCP server (Terminal 1)
+cd mcp-ui-server && npm start
+
+# Start Next.js app (Terminal 2)
+npm run dev
+```
+
+### Docker (Local Testing)
+```bash
+# Test Docker build
+./test-docker.sh
+
+# Run with Docker Compose
+docker-compose up
+```
+
+### AWS ECS Fargate (Production)
+```bash
+# Deploy to AWS
+cd cdk
+./deploy.sh
+```
+
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed AWS deployment instructions.
+
+## 🏗️ Architecture
+
+### Local Development:
+```
+Next.js App (localhost:3000) ←→ MCP Server (stdio)
+                ↓
+        Amazon Bedrock (Claude 4 Sonnet)
+```
+
+### Production (AWS):
+```
+CloudFront → Private ALB → ECS Fargate → Amazon Bedrock
+    ↓              ↓           ↓
+  Global CDN   Load Balancer  Container
+```
 
 ### Prerequisites
 - Node.js 18+ and npm/pnpm
