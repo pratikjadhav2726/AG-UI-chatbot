@@ -111,7 +111,7 @@ async function testBedrock() {
       console.error('   - AWS_PROFILE environment variable pointing to a valid profile');
     }
     
-    console.error('\n📖 See BEDROCK_MIGRATION.md for troubleshooting help.');
+    console.error('\n📖 See README.md troubleshooting section for help.');
     process.exit(1);
   }
 }
