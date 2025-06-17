@@ -5,15 +5,18 @@ set -e
 
 echo "🐳 Testing Docker build for Generative UI Chat..."
 
+# Use docker wrapper to avoid sudo
+DOCKER_CMD="./docker-wrapper.sh"
+
 # Build the Docker image
 echo "📦 Building Docker image..."
-docker build -t generative-ui-chat:test .
+$DOCKER_CMD build -t generative-ui-chat:test .
 
 echo "✅ Docker image built successfully!"
 
 # Test run the container
 echo "🚀 Starting container for testing..."
-docker run -d \
+$DOCKER_CMD run -d \
   --name generative-ui-chat-test \
   -p 3001:3000 \
   -e NODE_ENV=production \
@@ -35,13 +38,13 @@ if curl -f http://localhost:3001/api/health > /dev/null 2>&1; then
 else
     echo "❌ Health check failed!"
     echo "📋 Container logs:"
-    docker logs generative-ui-chat-test
+    $DOCKER_CMD logs generative-ui-chat-test
 fi
 
 # Cleanup
 echo "🧹 Cleaning up test container..."
-docker stop generative-ui-chat-test > /dev/null 2>&1 || true
-docker rm generative-ui-chat-test > /dev/null 2>&1 || true
+$DOCKER_CMD stop generative-ui-chat-test > /dev/null 2>&1 || true
+$DOCKER_CMD rm generative-ui-chat-test > /dev/null 2>&1 || true
 
 echo "🎉 Docker test completed!"
 echo ""

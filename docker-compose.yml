@@ -23,6 +23,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    # Add user mapping to avoid permission issues
+    user: "1001:1001"
 
 networks:
   default:

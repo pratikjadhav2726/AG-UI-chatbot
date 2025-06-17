@@ -12,6 +12,9 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Docker command wrapper
+DOCKER_CMD="./docker-wrapper.sh"
+
 # Function to check status
 check_status() {
     if [ $? -eq 0 ]; then
@@ -50,12 +53,12 @@ fi
 # Check Docker
 check_command docker
 if [ $? -eq 0 ]; then
-    DOCKER_VERSION=$(docker --version 2>/dev/null)
+    DOCKER_VERSION=$($DOCKER_CMD --version 2>/dev/null)
     echo -e "${GREEN}   $DOCKER_VERSION${NC}"
     
     # Check if Docker is running
-    if docker info &> /dev/null; then
-        echo -e "${GREEN}✅ Docker daemon is running${NC}"
+    if $DOCKER_CMD info &> /dev/null; then
+        echo -e "${GREEN}✅ Docker daemon is running (no sudo required)${NC}"
     else
         echo -e "${RED}❌ Docker daemon is not running${NC}"
     fi
@@ -84,6 +87,7 @@ echo "🏗️ Checking Project Structure..."
 FILES=(
     "package.json"
     "Dockerfile"
+    "docker-wrapper.sh"
     "app/api/health/route.ts"
     "app/api/mcp-chat/route.ts"
     "cdk/lib/generative-ui-chat-stack.ts"
@@ -126,10 +130,10 @@ echo ""
 echo "🐳 Testing Docker Build..."
 
 # Test Docker build (quick check)
-if timeout 60s docker build -t generative-ui-chat:verify . &> /dev/null; then
-    echo -e "${GREEN}✅ Docker build successful${NC}"
+if timeout 60s $DOCKER_CMD build -t generative-ui-chat:verify . &> /dev/null; then
+    echo -e "${GREEN}✅ Docker build successful (no sudo required)${NC}"
     # Clean up test image
-    docker rmi generative-ui-chat:verify &> /dev/null || true
+    $DOCKER_CMD rmi generative-ui-chat:verify &> /dev/null || true
 else
     echo -e "${YELLOW}⚠️  Docker build test skipped (takes time) - run ./test-docker.sh to verify${NC}"
 fi
@@ -168,7 +172,7 @@ echo "🎯 Deployment Readiness Summary..."
 
 echo -e "${GREEN}✅ Migration to Bedrock: Complete${NC}"
 echo -e "${GREEN}✅ AWS Infrastructure: Ready${NC}"
-echo -e "${GREEN}✅ Docker Containerization: Working${NC}"
+echo -e "${GREEN}✅ Docker Containerization: Working (no sudo required)${NC}"
 echo -e "${GREEN}✅ CDK Configuration: Valid${NC}"
 echo -e "${GREEN}✅ Documentation: Complete${NC}"
 
@@ -182,7 +186,7 @@ echo "3. Run deployment: cd cdk && ./deploy.sh"
 echo ""
 echo "🔍 Useful Commands:"
 echo "   Test Bedrock: npm run test-bedrock"
-echo "   Test Docker: ./test-docker.sh"
+echo "   Test Docker: ./test-docker.sh (no sudo required)"
 echo "   Deploy CDK: cd cdk && ./deploy.sh"
 echo "   Monitor: aws logs tail /ecs/generative-ui-chat-dev --follow"
 echo ""

@@ -5,14 +5,17 @@ set -e
 
 echo "🚀 Deploying Generative UI Chat to AWS ECS Fargate..."
 
+# Docker command wrapper (no sudo required)
+DOCKER_CMD="../docker-wrapper.sh"
+
 # Check if AWS CLI is configured
 if ! aws sts get-caller-identity > /dev/null 2>&1; then
     echo "❌ AWS CLI is not configured. Please run 'aws configure' first."
     exit 1
 fi
 
-# Check if Docker is running
-if ! docker info > /dev/null 2>&1; then
+# Check if Docker is running (using wrapper)
+if ! $DOCKER_CMD info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker first."
     exit 1
 fi
@@ -25,6 +28,7 @@ echo "📋 Deployment Configuration:"
 echo "   Account: $ACCOUNT"
 echo "   Region: $REGION"
 echo "   Environment: ${ENVIRONMENT:-dev}"
+echo "   Docker: Using wrapper (no sudo required)"
 
 # Set environment variables
 export CDK_DEFAULT_ACCOUNT=$ACCOUNT
