@@ -62,28 +62,27 @@ export class GenerativeUiChatStack extends cdk.Stack {
       inlinePolicies: {
         BedrockFullAccess: new iam.PolicyDocument({
           statements: [
-            // Full Bedrock model access including inference profiles
+            // Bedrock model invocation permissions
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
                 'bedrock:InvokeModel',
                 'bedrock:InvokeModelWithResponseStream',
-                'bedrock:GetFoundationModel',
-                'bedrock:ListFoundationModels',
+              ],
+              resources: [
+                'arn:aws:bedrock:*::foundation-model/*',
+                'arn:aws:bedrock:*:*:inference-profile/*',
+              ],
+            }),
+            // Bedrock inference profile management permissions
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
                 'bedrock:GetInferenceProfile',
                 'bedrock:ListInferenceProfiles',
               ],
               resources: [
-                // Allow access to all Bedrock foundation models
-                `arn:aws:bedrock:${this.region}::foundation-model/*`,
-                // Allow access to all inference profiles
-                `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/*`,
-                // Specific Claude models
-                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-*`,
-                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-sonnet-4-*`,
-                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-5-sonnet-*`,
-                // Specific inference profiles for Claude models
-                `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/us.anthropic.claude-*`,
+                'arn:aws:bedrock:*:*:inference-profile/*',
               ],
             }),
             // Bedrock Agent access (if needed)
