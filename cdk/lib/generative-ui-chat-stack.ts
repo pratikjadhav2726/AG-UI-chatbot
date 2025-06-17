@@ -3,13 +3,12 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Construct } from 'constructs';
 
 export interface GenerativeUiChatStackProps extends cdk.StackProps {
@@ -19,11 +18,16 @@ export interface GenerativeUiChatStackProps extends cdk.StackProps {
 }
 
 export class GenerativeUiChatStack extends cdk.Stack {
+  public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
+  public readonly fargateService: ecsPatterns.ApplicationLoadBalancedFargateService;
+  public readonly vpcOrigin: origins.VpcOrigin;
+  public readonly vpc: ec2.Vpc;
+
   constructor(scope: Construct, id: string, props: GenerativeUiChatStackProps) {
     super(scope, id, props);
 
     // Create VPC with public and private subnets
-    const vpc = new ec2.Vpc(this, 'GenerativeUiChatVpc', {
+    this.vpc = new ec2.Vpc(this, 'GenerativeUiChatVpc', {
       maxAzs: 2,
       natGateways: 1, // Cost optimization: single NAT gateway
       subnetConfiguration: [
@@ -42,26 +46,71 @@ export class GenerativeUiChatStack extends cdk.Stack {
 
     // Create ECS Cluster
     const cluster = new ecs.Cluster(this, 'GenerativeUiChatCluster', {
-      vpc,
+      vpc: this.vpc,
       clusterName: `generative-ui-chat-${props.environment}`,
       containerInsights: true,
     });
 
-    // Create IAM role for ECS tasks with Bedrock permissions
+    // Create IAM role for ECS tasks with comprehensive Bedrock permissions
     const taskRole = new iam.Role(this, 'GenerativeUiChatTaskRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      description: 'IAM role for Generative UI Chat ECS tasks',
+      description: 'IAM role for Generative UI Chat ECS tasks with full Bedrock access',
+      managedPolicies: [
+        // Add CloudWatch logs permissions for application logging
+        iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchLogsFullAccess'),
+      ],
       inlinePolicies: {
-        BedrockAccess: new iam.PolicyDocument({
+        BedrockFullAccess: new iam.PolicyDocument({
           statements: [
+            // Full Bedrock model access including inference profiles
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
                 'bedrock:InvokeModel',
                 'bedrock:InvokeModelWithResponseStream',
+                'bedrock:GetFoundationModel',
+                'bedrock:ListFoundationModels',
+                'bedrock:GetInferenceProfile',
+                'bedrock:ListInferenceProfiles',
               ],
               resources: [
-                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-4-sonnet-20250514-v1:0`,
+                // Allow access to all Bedrock foundation models
+                `arn:aws:bedrock:${this.region}::foundation-model/*`,
+                // Allow access to all inference profiles
+                `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/*`,
+                // Specific Claude models
+                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-*`,
+                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-sonnet-4-*`,
+                `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-5-sonnet-*`,
+                // Specific inference profiles for Claude models
+                `arn:aws:bedrock:${this.region}:${this.account}:inference-profile/us.anthropic.claude-*`,
+              ],
+            }),
+            // Bedrock Agent access (if needed)
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'bedrock:InvokeAgent',
+                'bedrock:GetAgent',
+                'bedrock:ListAgents',
+              ],
+              resources: [
+                `arn:aws:bedrock:${this.region}:${this.account}:agent/*`,
+              ],
+            }),
+            // CloudWatch Logs access for application logging
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+                'logs:DescribeLogGroups',
+                'logs:DescribeLogStreams',
+              ],
+              resources: [
+                `arn:aws:logs:${this.region}:${this.account}:log-group:/ecs/generative-ui-chat-${props.environment}*`,
+                `arn:aws:logs:${this.region}:${this.account}:log-group:/aws/ecs/generative-ui-chat-${props.environment}*`,
               ],
             }),
           ],
@@ -69,23 +118,50 @@ export class GenerativeUiChatStack extends cdk.Stack {
       },
     });
 
-    // Create execution role for ECS tasks
+    // Create execution role for ECS tasks with enhanced logging permissions
     const executionRole = new iam.Role(this, 'GenerativeUiChatExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      description: 'ECS Task Execution Role with enhanced CloudWatch logging',
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
       ],
+      inlinePolicies: {
+        EnhancedLogging: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+                'logs:DescribeLogGroups',
+                'logs:DescribeLogStreams',
+              ],
+              resources: [
+                `arn:aws:logs:${this.region}:${this.account}:log-group:/ecs/generative-ui-chat-${props.environment}*`,
+              ],
+            }),
+          ],
+        }),
+      },
     });
 
-    // Create CloudWatch Log Group
+    // Create CloudWatch Log Group with enhanced configuration
     const logGroup = new logs.LogGroup(this, 'GenerativeUiChatLogGroup', {
       logGroupName: `/ecs/generative-ui-chat-${props.environment}`,
-      retention: logs.RetentionDays.ONE_WEEK,
+      retention: logs.RetentionDays.TWO_WEEKS, // Extended retention for better debugging
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create additional log group for application-specific logs
+    const appLogGroup = new logs.LogGroup(this, 'GenerativeUiChatAppLogGroup', {
+      logGroupName: `/aws/ecs/generative-ui-chat-${props.environment}/app`,
+      retention: logs.RetentionDays.TWO_WEEKS,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // Create Fargate Service with Application Load Balancer
-    const fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'GenerativeUiChatService', {
+    this.fargateService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, 'GenerativeUiChatService', {
       cluster,
       serviceName: `generative-ui-chat-${props.environment}`,
       cpu: 1024, // 1 vCPU
@@ -101,14 +177,24 @@ export class GenerativeUiChatStack extends cdk.Stack {
         environment: {
           NODE_ENV: 'production',
           AWS_REGION: this.region,
+          AWS_DEFAULT_REGION: this.region,
           PORT: '3000',
+          // Explicitly disable AWS SDK credential chain that looks for access keys
+          AWS_SDK_LOAD_CONFIG: '1',
+          // Force AWS SDK to use IAM role credentials
+          AWS_EC2_METADATA_DISABLED: 'false',
+          // Application-specific environment variables
+          LOG_LEVEL: 'info',
+          BEDROCK_REGION: this.region,
         },
         logDriver: ecs.LogDrivers.awsLogs({
           streamPrefix: 'generative-ui-chat',
           logGroup,
+          datetimeFormat: '%Y-%m-%d %H:%M:%S',
+          multilinePattern: '^\\d{4}-\\d{2}-\\d{2}',
         }),
       },
-      publicLoadBalancer: false, // Private ALB
+      publicLoadBalancer: false, // Private ALB since CloudFront will access via VPC Origin
       listenerPort: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
       domainName: props.domainName,
@@ -118,8 +204,27 @@ export class GenerativeUiChatStack extends cdk.Stack {
       certificate: props.certificateArn ? acm.Certificate.fromCertificateArn(this, 'Certificate', props.certificateArn) : undefined,
     });
 
+    // Store reference to load balancer for cross-stack access
+    this.loadBalancer = this.fargateService.loadBalancer;
+
+    // Create VPC Origin for CloudFront (in same stack as ALB to avoid deletion issues)
+    this.vpcOrigin = origins.VpcOrigin.withApplicationLoadBalancer(this.loadBalancer, {
+      vpcOriginName: `generative-ui-chat-vpc-origin-${props.environment}`,
+      httpPort: 80,
+      httpsPort: 443,
+      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+      connectionAttempts: 3,
+      connectionTimeout: cdk.Duration.seconds(10),
+      readTimeout: cdk.Duration.seconds(30),
+      keepaliveTimeout: cdk.Duration.seconds(5),
+      originSslProtocols: [cloudfront.OriginSslPolicy.TLS_V1_2],
+      customHeaders: {
+        'X-CloudFront-Origin': 'vpc-origin'
+      }
+    });
+
     // Configure health check
-    fargateService.targetGroup.configureHealthCheck({
+    this.fargateService.targetGroup.configureHealthCheck({
       path: '/api/health',
       healthyHttpCodes: '200',
       interval: cdk.Duration.seconds(30),
@@ -129,7 +234,7 @@ export class GenerativeUiChatStack extends cdk.Stack {
     });
 
     // Configure auto scaling
-    const scalableTarget = fargateService.service.autoScaleTaskCount({
+    const scalableTarget = this.fargateService.service.autoScaleTaskCount({
       minCapacity: 2,
       maxCapacity: 10,
     });
@@ -146,85 +251,71 @@ export class GenerativeUiChatStack extends cdk.Stack {
       scaleOutCooldown: cdk.Duration.minutes(2),
     });
 
-    // Create CloudFront Distribution
-    const distribution = new cloudfront.Distribution(this, 'GenerativeUiChatDistribution', {
-      defaultBehavior: {
-        origin: new origins.LoadBalancerV2Origin(fargateService.loadBalancer, {
-          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-          httpPort: 80,
-        }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
-        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED, // Disable caching for dynamic content
-        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-        compress: true,
-      },
-      additionalBehaviors: {
-        '/api/*': {
-          origin: new origins.LoadBalancerV2Origin(fargateService.loadBalancer, {
-            protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-            httpPort: 80,
-          }),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
-        },
-        '/_next/static/*': {
-          origin: new origins.LoadBalancerV2Origin(fargateService.loadBalancer, {
-            protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-            httpPort: 80,
-          }),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-          compress: true,
-        },
-      },
-      priceClass: cloudfront.PriceClass.PRICE_CLASS_100, // Cost optimization
-      comment: `Generative UI Chat CloudFront Distribution - ${props.environment}`,
-      enabled: true,
+    // Outputs for cross-stack references
+    new cdk.CfnOutput(this, 'LoadBalancerArn', {
+      value: this.loadBalancer.loadBalancerArn,
+      description: 'Application Load Balancer ARN',
+      exportName: `GenerativeUiChat-${props.environment}-LoadBalancerArn`,
     });
 
-    // Create health check endpoint for the application
-    this.createHealthCheckEndpoint(fargateService);
-
-    // Outputs
     new cdk.CfnOutput(this, 'LoadBalancerDNS', {
-      value: fargateService.loadBalancer.loadBalancerDnsName,
+      value: this.loadBalancer.loadBalancerDnsName,
       description: 'Application Load Balancer DNS name',
+      exportName: `GenerativeUiChat-${props.environment}-LoadBalancerDNS`,
     });
 
-    new cdk.CfnOutput(this, 'CloudFrontURL', {
-      value: `https://${distribution.distributionDomainName}`,
-      description: 'CloudFront Distribution URL',
+    new cdk.CfnOutput(this, 'LoadBalancerSecurityGroupId', {
+      value: this.fargateService.loadBalancer.connections.securityGroups[0].securityGroupId,
+      description: 'Application Load Balancer Security Group ID',
+      exportName: `GenerativeUiChat-${props.environment}-LoadBalancerSecurityGroupId`,
     });
 
-    new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
-      value: distribution.distributionId,
-      description: 'CloudFront Distribution ID',
+    new cdk.CfnOutput(this, 'VpcOriginId', {
+      value: `vpc-origin-${props.environment}`,
+      description: 'VPC Origin ID for CloudFront',
+      exportName: `GenerativeUiChat-${props.environment}-VpcOriginId`,
     });
 
     new cdk.CfnOutput(this, 'ECSClusterName', {
       value: cluster.clusterName,
       description: 'ECS Cluster Name',
+      exportName: `GenerativeUiChat-${props.environment}-ECSClusterName`,
     });
 
     new cdk.CfnOutput(this, 'ECSServiceName', {
-      value: fargateService.service.serviceName,
+      value: this.fargateService.service.serviceName,
       description: 'ECS Service Name',
+      exportName: `GenerativeUiChat-${props.environment}-ECSServiceName`,
     });
 
-    if (props.domainName) {
-      new cdk.CfnOutput(this, 'CustomDomainURL', {
-        value: `https://${props.domainName}`,
-        description: 'Custom Domain URL',
-      });
-    }
-  }
+    new cdk.CfnOutput(this, 'VpcId', {
+      value: this.vpc.vpcId,
+      description: 'VPC ID',
+      exportName: `GenerativeUiChat-${props.environment}-VpcId`,
+    });
 
-  private createHealthCheckEndpoint(fargateService: ecsPatterns.ApplicationLoadBalancedFargateService) {
-    // The health check endpoint will be handled by the Next.js application
-    // We'll create it in the Next.js app
+    new cdk.CfnOutput(this, 'LogGroupName', {
+      value: logGroup.logGroupName,
+      description: 'CloudWatch Log Group Name',
+      exportName: `GenerativeUiChat-${props.environment}-LogGroupName`,
+    });
+
+    new cdk.CfnOutput(this, 'AppLogGroupName', {
+      value: appLogGroup.logGroupName,
+      description: 'Application CloudWatch Log Group Name',
+      exportName: `GenerativeUiChat-${props.environment}-AppLogGroupName`,
+    });
+
+    new cdk.CfnOutput(this, 'TaskRoleArn', {
+      value: taskRole.roleArn,
+      description: 'ECS Task Role ARN',
+      exportName: `GenerativeUiChat-${props.environment}-TaskRoleArn`,
+    });
+
+    // Tags
+    cdk.Tags.of(this).add('Project', 'GenerativeUiChat');
+    cdk.Tags.of(this).add('Environment', props.environment);
+    cdk.Tags.of(this).add('ManagedBy', 'CDK');
+    cdk.Tags.of(this).add('Component', 'Application');
   }
 }

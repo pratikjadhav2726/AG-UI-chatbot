@@ -10,11 +10,15 @@ services:
     environment:
       - NODE_ENV=production
       - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_PROFILE=${AWS_PROFILE}
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      # For local development with explicit credentials (optional)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      # For ECS deployment, IAM roles will be used automatically when no access keys are provided
+      - AWS_SDK_LOAD_CONFIG=1
+      - AWS_EC2_METADATA_DISABLED=false
     volumes:
-      # Mount AWS credentials if using profiles
+      # Mount AWS credentials if using profiles (optional for local development)
       - ~/.aws:/home/nextjs/.aws:ro
     restart: unless-stopped
     healthcheck:

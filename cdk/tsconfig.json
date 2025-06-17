@@ -23,11 +23,16 @@
     "typeRoots": [
       "./node_modules/@types"
     ],
-    "outDir": "lib",
+    "outDir": "dist",
     "rootDir": "."
   },
+  "include": [
+    "bin/**/*",
+    "lib/**/*"
+  ],
   "exclude": [
     "node_modules",
-    "cdk.out"
+    "cdk.out",
+    "dist"
   ]
 }

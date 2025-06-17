@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Deployment script for Generative UI Chat on AWS ECS Fargate
+# Deployment script for Generative UI Chat on AWS ECS Fargate with CloudFront
 set -e
 
-echo "🚀 Deploying Generative UI Chat to AWS ECS Fargate..."
+echo "🚀 Deploying Generative UI Chat to AWS ECS Fargate with CloudFront..."
 
 # Docker command wrapper (no sudo required)
 DOCKER_CMD="../docker-wrapper.sh"
@@ -60,34 +60,67 @@ npm run build
 echo "🔍 Synthesizing CloudFormation template..."
 npx cdk synth > /dev/null
 
-# Deploy the stack
-echo "🚀 Deploying CDK stack..."
+# Deploy the stacks
+echo "🚀 Deploying CDK stacks..."
+echo "   📦 Step 1: Deploying Application Stack (ECS, ALB, VPC)..."
+
+APP_STACK_NAME="GenerativeUiChat-${ENVIRONMENT:-dev}"
 if [ -n "$DOMAIN_NAME" ] && [ -n "$CERTIFICATE_ARN" ]; then
     echo "   Using custom domain: $DOMAIN_NAME"
-    npx cdk deploy --all \
+    npx cdk deploy "$APP_STACK_NAME" \
         --context domainName="$DOMAIN_NAME" \
         --context certificateArn="$CERTIFICATE_ARN" \
         --context environment="${ENVIRONMENT:-dev}" \
         --require-approval never \
         --verbose
 else
-    echo "   Using CloudFront default domain"
-    npx cdk deploy --all \
+    echo "   Using default configuration"
+    npx cdk deploy "$APP_STACK_NAME" \
         --context environment="${ENVIRONMENT:-dev}" \
         --require-approval never \
         --verbose
 fi
 
-echo "✅ Deployment completed successfully!"
+echo "   ✅ Application Stack deployed successfully!"
+echo ""
+echo "   🌐 Step 2: Deploying CloudFront Stack..."
+
+CLOUDFRONT_STACK_NAME="GenerativeUiChat-CloudFront-${ENVIRONMENT:-dev}"
+if [ -n "$DOMAIN_NAME" ] && [ -n "$CERTIFICATE_ARN" ]; then
+    npx cdk deploy "$CLOUDFRONT_STACK_NAME" \
+        --context domainName="$DOMAIN_NAME" \
+        --context certificateArn="$CERTIFICATE_ARN" \
+        --context environment="${ENVIRONMENT:-dev}" \
+        --require-approval never \
+        --verbose
+else
+    npx cdk deploy "$CLOUDFRONT_STACK_NAME" \
+        --context environment="${ENVIRONMENT:-dev}" \
+        --require-approval never \
+        --verbose
+fi
+
+echo "   ✅ CloudFront Stack deployed successfully!"
+echo ""
+echo "✅ All stacks deployed successfully!"
 echo ""
 echo "📋 Getting deployment outputs..."
 
-# Get stack outputs
-STACK_NAME="GenerativeUiChat-${ENVIRONMENT:-dev}"
-if aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" > /dev/null 2>&1; then
-    echo "📊 Stack Outputs:"
+# Get application stack outputs
+echo "📊 Application Stack Outputs:"
+if aws cloudformation describe-stacks --stack-name "$APP_STACK_NAME" --region "$REGION" > /dev/null 2>&1; then
     aws cloudformation describe-stacks \
-        --stack-name "$STACK_NAME" \
+        --stack-name "$APP_STACK_NAME" \
+        --region "$REGION" \
+        --query 'Stacks[0].Outputs[*].[OutputKey,OutputValue]' \
+        --output table
+fi
+
+echo ""
+echo "📊 CloudFront Stack Outputs:"
+if aws cloudformation describe-stacks --stack-name "$CLOUDFRONT_STACK_NAME" --region "$REGION" > /dev/null 2>&1; then
+    aws cloudformation describe-stacks \
+        --stack-name "$CLOUDFRONT_STACK_NAME" \
         --region "$REGION" \
         --query 'Stacks[0].Outputs[*].[OutputKey,OutputValue]' \
         --output table
@@ -96,11 +129,14 @@ fi
 echo ""
 echo "📋 Next steps:"
 echo "1. Wait for ECS service to be healthy (may take 5-10 minutes)"
-echo "2. Check service status:"
+echo "2. Wait for CloudFront distribution to deploy (may take 10-15 minutes)"
+echo "3. Check service status:"
 echo "   aws ecs describe-services --cluster generative-ui-chat-${ENVIRONMENT:-dev} --services generative-ui-chat-${ENVIRONMENT:-dev}"
-echo "3. Monitor application logs:"
+echo "4. Monitor application logs:"
 echo "   aws logs tail /ecs/generative-ui-chat-${ENVIRONMENT:-dev} --follow"
-echo "4. Test the application using the CloudFront URL from outputs above"
+echo "5. Test the application using the CloudFront URL from outputs above"
 echo ""
 echo "🔍 Troubleshooting:"
 echo "   If deployment fails, check TROUBLESHOOTING.md for common issues and solutions"
+echo "   Application Stack: $APP_STACK_NAME"
+echo "   CloudFront Stack: $CLOUDFRONT_STACK_NAME"

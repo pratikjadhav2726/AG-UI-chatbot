@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateText, tool, CoreMessage } from 'ai';
-import { bedrock } from '@ai-sdk/amazon-bedrock'
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { fromContainerMetadata, fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
 
@@ -199,24 +199,41 @@ const getTemplateExamplesTool = tool({
   }
 });
 
+async function initializeBedrock() {
+  try {
+    
+
+    // Test credential resolution first
+    const credentialProvider = fromContainerMetadata();
+    const credentials = await credentialProvider();
+    
+    console.log('Container metadata credentials resolved:', {
+      accessKeyId: credentials.accessKeyId?.substring(0, 10) + '...',
+      hasSecretKey: !!credentials.secretAccessKey,
+      hasSessionToken: !!credentials.sessionToken,
+      expiration: credentials.expiration
+    });
+
+    // Create Bedrock provider
+    const bedrock = createAmazonBedrock({
+      region: process.env.AWS_REGION || 'us-east-1',
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
+      sessionToken: credentials.sessionToken,
+    });
+
+    return bedrock;
+  } catch (error) {
+    console.error('Failed to initialize Bedrock with container metadata:', error);
+    throw error;
+  }
+}
 export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
-
-    // Configure Bedrock with proper credential provider
-    const bedrockConfig = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY 
-      ? {
-          region: process.env.AWS_REGION || 'us-east-1',
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        }
-      : {
-          region: process.env.AWS_REGION || 'us-east-1',
-          credentialProvider: fromNodeProviderChain(),
-        };
-
+    const bedrock = await initializeBedrock();  
     const completion = await generateText({
-      model: bedrock('anthropic.claude-4-sonnet-20250514-v1:0', bedrockConfig),
+      model: bedrock('us.anthropic.claude-sonnet-4-20250514-v1:0'),
       messages,
       tools: {
         generateUITemplate: mcpUITool,
