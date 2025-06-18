@@ -185,6 +185,8 @@ export class GenerativeUiChatStack extends cdk.Stack {
           // Application-specific environment variables
           LOG_LEVEL: 'info',
           BEDROCK_REGION: this.region,
+          // Bedrock model configuration
+          BEDROCK_MODEL_ID: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
         },
         logDriver: ecs.LogDrivers.awsLogs({
           streamPrefix: 'generative-ui-chat',

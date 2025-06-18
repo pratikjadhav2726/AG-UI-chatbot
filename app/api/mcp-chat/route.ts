@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateText, tool, CoreMessage } from 'ai';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
-import { fromContainerMetadata, fromNodeProviderChain } from '@aws-sdk/credential-providers'
+import { fromContainerMetadata } from '@aws-sdk/credential-providers'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
 
@@ -231,9 +231,15 @@ async function initializeBedrock() {
 export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
-    const bedrock = await initializeBedrock();  
+    const bedrock = await initializeBedrock();
+    
+    // Get model ID from environment variable with fallback to current default
+    const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-sonnet-4-20250514-v1:0';
+    
+    console.log('Using Bedrock model:', modelId);
+    
     const completion = await generateText({
-      model: bedrock('us.anthropic.claude-sonnet-4-20250514-v1:0'),
+      model: bedrock(modelId),
       messages,
       tools: {
         generateUITemplate: mcpUITool,
@@ -297,9 +303,69 @@ Remember: The MCP server generates rich, realistic sample data for each template
     })
   } catch (error) {
     console.error('Error in chat route:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    
+    // Handle specific Bedrock errors
+    if (error && typeof error === 'object' && 'name' in error) {
+      const errorName = (error as any).name || (error as any).$fault;
+      const errorMessage = (error as any).message || 'Unknown error';
+      const metadata = (error as any).$metadata || {};
+      
+      // Log detailed error information
+      console.error('Bedrock Error Details:', {
+        name: errorName,
+        message: errorMessage,
+        fault: (error as any).$fault,
+        metadata: metadata,
+        requestId: (error as any).$metadata?.requestId,
+        timestamp: new Date().toISOString()
+      });
+
+      // Handle specific error types
+      switch (errorName) {
+        case 'ThrottlingException':
+          const retryAfter = metadata.totalRetryDelay || 30; // Use totalRetryDelay or default to 30 seconds
+          return NextResponse.json({
+            error: 'Rate limit exceeded',
+            message: 'Too many requests. Please wait a moment before trying again.',
+            details: 'The Bedrock service is currently throttling requests. This usually resolves within a few seconds.',
+            retryAfter: retryAfter
+          }, { status: 429 });
+
+        case 'ValidationException':
+          return NextResponse.json({
+            error: 'Invalid request',
+            message: 'The request contains invalid parameters.',
+            details: errorMessage
+          }, { status: 400 });
+
+        case 'AccessDeniedException':
+          return NextResponse.json({
+            error: 'Access denied',
+            message: 'Insufficient permissions to access the requested model.',
+            details: 'Please check IAM permissions for Bedrock access.'
+          }, { status: 403 });
+
+        case 'ServiceQuotaExceededException':
+          return NextResponse.json({
+            error: 'Service quota exceeded',
+            message: 'The service quota has been exceeded.',
+            details: 'Please try again later or contact support to increase quotas.'
+          }, { status: 429 });
+
+        default:
+          return NextResponse.json({
+            error: 'Bedrock service error',
+            message: `Service error: ${errorMessage}`,
+            details: `Error type: ${errorName}`
+          }, { status: 500 });
+      }
+    }
+
+    // Generic error fallback
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: 'An unexpected error occurred while processing your request.',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
