@@ -199,11 +199,31 @@ const getTemplateExamplesTool = tool({
   }
 });
 
+// Bedrock client cache with session management
+let cachedBedrockClient: any = null;
+let sessionExpiration: Date | null = null;
+let lastCredentials: any = null;
+
 async function initializeBedrock() {
   try {
-    
+    // Check if we have a valid cached client
+    if (cachedBedrockClient && sessionExpiration) {
+      const now = new Date();
+      const timeUntilExpiry = sessionExpiration.getTime() - now.getTime();
+      const fiveMinutesInMs = 5 * 60 * 1000; // 5 minutes buffer
+      
+      // If session expires in more than 5 minutes, reuse cached client
+      if (timeUntilExpiry > fiveMinutesInMs) {
+        console.log('Using cached Bedrock client, expires in:', Math.round(timeUntilExpiry / 1000 / 60), 'minutes');
+        return cachedBedrockClient;
+      } else {
+        console.log('Bedrock session expiring soon, refreshing client');
+      }
+    }
 
-    // Test credential resolution first
+    console.log('Initializing new Bedrock client with container metadata...');
+    
+    // Get fresh credentials from container metadata
     const credentialProvider = fromContainerMetadata();
     const credentials = await credentialProvider();
     
@@ -214,7 +234,7 @@ async function initializeBedrock() {
       expiration: credentials.expiration
     });
 
-    // Create Bedrock provider
+    // Create new Bedrock provider
     const bedrock = createAmazonBedrock({
       region: process.env.AWS_REGION || 'us-east-1',
       accessKeyId: credentials.accessKeyId,
@@ -222,15 +242,49 @@ async function initializeBedrock() {
       sessionToken: credentials.sessionToken,
     });
 
+    // Cache the client and session info
+    cachedBedrockClient = bedrock;
+    sessionExpiration = credentials.expiration || null;
+    lastCredentials = {
+      accessKeyId: credentials.accessKeyId?.substring(0, 10) + '...',
+      expiration: credentials.expiration
+    };
+
+    console.log('Bedrock client cached, session expires at:', sessionExpiration);
     return bedrock;
   } catch (error) {
     console.error('Failed to initialize Bedrock with container metadata:', error);
+    // Clear cache on error
+    cachedBedrockClient = null;
+    sessionExpiration = null;
+    lastCredentials = null;
     throw error;
   }
 }
+// Helper function to get session status for debugging
+function getSessionStatus() {
+  if (!sessionExpiration) return 'No session';
+  
+  const now = new Date();
+  const timeUntilExpiry = sessionExpiration.getTime() - now.getTime();
+  const minutesUntilExpiry = Math.round(timeUntilExpiry / 1000 / 60);
+  
+  return {
+    hasSession: !!cachedBedrockClient,
+    expiresAt: sessionExpiration.toISOString(),
+    minutesUntilExpiry,
+    isValid: timeUntilExpiry > 5 * 60 * 1000, // 5 minute buffer
+    lastCredentials: lastCredentials?.accessKeyId
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
+    
+    // Log session status for debugging
+    console.log('Session status:', getSessionStatus());
+    
     const bedrock = await initializeBedrock();
     
     // Get model ID from environment variable with fallback to current default
