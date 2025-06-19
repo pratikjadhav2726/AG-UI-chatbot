@@ -528,10 +528,10 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
           { label: "Rating", value: "rating" }
         ]
       },
-      customData: finalCustomData, // Pass the data containing productsList
+      // customData: finalCustomData, // This is the first one, ensure it's correctly defined as finalCustomData
       // Other base fields:
       actionButtonText: customConfig?.actionButtonText || "View All Products",
-      customData: finalCustomData, // Ensure customData is also passed here
+      customData: finalCustomData, // This is the one that should remain if it's the last one intended.
     };
   }
 

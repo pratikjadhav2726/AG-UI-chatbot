@@ -1,5 +1,54 @@
 import { z } from "zod";
 
+// Action Schema Types (mirrored from lib/template-schemas.ts for server-side use if needed, primarily for generator typing)
+export type ActionTriggerType = "onClick" | "onSelect" | "onSubmit";
+export type ActionType = "MCP_TOOL_CALL" | "CUSTOM_EVENT" | "NAVIGATE" | "API_CALL";
+
+export interface ActionSchema {
+  id: string;
+  label?: string;
+  trigger: ActionTriggerType;
+  type: ActionType;
+  eventName?: string;
+  toolName?: string;
+  arguments?: Record<string, any>;
+  apiUrl?: string;
+  apiMethod?: "GET" | "POST" | "PUT" | "DELETE";
+  payload?: Record<string, any>;
+  navigateTo?: string;
+  confirmationMessage?: string;
+}
+
+// Zod schema for ActionSchema
+const ActionSchemaZod = z.object({
+  id: z.string(),
+  label: z.string().optional(),
+  trigger: z.enum(["onClick", "onSelect", "onSubmit"]), // Matches ActionTriggerType
+  type: z.enum(["MCP_TOOL_CALL", "CUSTOM_EVENT", "NAVIGATE", "API_CALL"]), // Matches ActionType
+  eventName: z.string().optional(),
+  toolName: z.string().optional(),
+  arguments: z.record(z.any()).optional(),
+  apiUrl: z.string().optional(),
+  apiMethod: z.enum(["GET", "POST", "PUT", "DELETE"]).optional(),
+  payload: z.record(z.any()).optional(),
+  navigateTo: z.string().optional(),
+  confirmationMessage: z.string().optional(),
+});
+
+// Zod schema for DynamicItemFieldSchema (mirroring lib/template-schemas.ts)
+const DynamicItemFieldSchemaZod = z.object({
+  id: z.string(),
+  type: z.enum(["image", "text", "badge", "button"]),
+  source: z.string(),
+  label: z.string().optional(),
+  style: z.enum(["title", "description", "price", "label", "tag", "button"]).optional(),
+  actionDefinition: ActionSchemaZod.optional(), // Assuming ActionSchemaZod is defined
+  altSource: z.string().optional(),
+  prefix: z.string().optional(),
+  suffix: z.string().optional(),
+  condition: z.string().optional(),
+});
+
 // Enhanced base template schema for dynamic content
 export const BaseTemplateSchema = z.object({
   templateType: z.string(),
@@ -25,7 +74,8 @@ export const BaseTemplateSchema = z.object({
     brandName: z.string().optional(),
     brandColors: z.array(z.string()).optional(),
     fontFamily: z.string().optional()
-  }).optional()
+  }).optional(),
+  actions: z.array(ActionSchemaZod).optional(), // <--- ADDED THIS LINE
 });
 
 // Enhanced Dashboard template schema with dynamic content
@@ -115,28 +165,14 @@ export const DataTableSchema = BaseTemplateSchema.extend({
 // Enhanced Product Catalog template schema with dynamic content
 export const ProductCatalogSchema = BaseTemplateSchema.extend({
   templateType: z.literal("productCatalog"),
-  layout: z.enum(["grid", "list"]).default("grid"),
-  products: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string(),
-    price: z.number(),
-    currency: z.string().optional().default("USD"),
-    imageUrl: z.string().optional(),
-    images: z.array(z.string()).optional(), // Multiple product images
-    rating: z.number().optional(),
-    reviewCount: z.number().optional(),
-    badges: z.array(z.string()).optional(),
-    category: z.string().optional(),
-    inStock: z.boolean().optional().default(true),
-    discount: z.number().optional(), // Percentage discount
-    specifications: z.record(z.string()).optional(), // Dynamic product specs
-    vendor: z.string().optional(),
-    sku: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    availability: z.string().optional(),
-    shippingInfo: z.string().optional()
-  })),
+  layout: z.enum(["grid", "list"]).default("grid").optional(), // Made optional to align with TS
+  columns: z.number().optional().default(3), // <-- ADDED .default(3) for consistency
+
+  itemDataSource: z.string(), // <-- ADDED
+  itemSchema: z.object({      // <-- ADDED
+    fields: z.array(DynamicItemFieldSchemaZod),
+  }),
+
   categories: z.array(z.object({
     id: z.string(),
     name: z.string(),
@@ -144,7 +180,7 @@ export const ProductCatalogSchema = BaseTemplateSchema.extend({
     description: z.string().optional()
   })).optional(),
   sorting: z.object({
-    enabled: z.boolean().default(true),
+    enabled: z.boolean().default(true).optional(), // Made optional
     options: z.array(z.object({
       label: z.string(),
       value: z.string()
@@ -169,6 +205,7 @@ export const ProductCatalogSchema = BaseTemplateSchema.extend({
     ctaText: z.string().optional(),
     ctaAction: z.string().optional()
   }).optional()
+  // Note: The old 'products' field is removed by not including it here.
 });
 
 // Profile Card template schema
