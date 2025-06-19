@@ -1,4 +1,4 @@
-import { templateSchemas, TemplateType } from "../schemas.js";
+import { templateSchemas, TemplateType, ActionSchema } from "../schemas.js";
 import type { TemplateConfig } from "../schemas.js";
 
 export interface TemplateGenerator<T extends TemplateType> {
@@ -71,6 +71,27 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
     const defaultCharts = this.generateCharts(useCase, customData);
     const defaultActivity = this.generateActivity(useCase, customData, images);
 
+    const refreshAction: ActionSchema = {
+      id: "dashboardRefresh",
+      trigger: "onSubmit", // onSubmit is a convention for the main footer button
+      type: "MCP_TOOL_CALL",
+      toolName: "generate_ui_template",
+      arguments: { // Static arguments for the tool
+        templateType: "dashboard",
+        title: params.title,
+        description: params.description,
+        useCase: params.useCase,
+        // Note: Passing params.customData might be stale.
+        // A more robust refresh might need to indicate what to refresh.
+        // For now, this demonstrates the structure.
+        customData: params.customData,
+        theme: params.theme,
+        primaryColor: params.primaryColor,
+        fullScreen: params.fullScreen
+      },
+      label: customConfig?.actionButtonText || "Refresh Data"
+    };
+
     return {
       templateType: "dashboard",
       title,
@@ -83,9 +104,9 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
       metrics: customConfig?.metrics || defaultMetrics,
       charts: customConfig?.charts || defaultCharts,
       recentActivity: customConfig?.recentActivity || defaultActivity,
-      actionButtonText: customConfig?.actionButtonText || "Refresh Data",
-      // Enhanced dynamic content
-      customData,
+      actionButtonText: refreshAction.label, // Keep for the button's text
+      actions: [refreshAction], // Populate the actions array
+      customData: params.customData, // Ensure customData is passed
       images,
       textContent,
       brandingConfig,
@@ -132,6 +153,14 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
         changeType: "increase" as const,
         icon: "Star",
         color: "#8b5cf6"
+      },
+      {
+        id: "projectedRevenue",
+        label: "Projected Revenue (Q4)",
+        value: "$75,000",
+        icon: "TrendingUp",
+        color: "#22c55e",
+        renderCondition: "customData.showProjections === true" // Example
       }
     ];
 
@@ -403,7 +432,7 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
 
 export class ProductCatalogGenerator implements TemplateGenerator<"productCatalog"> {
   name = "Product Catalog Template";
-  description = "E-commerce style product listings with filtering and sorting";
+  description = "E-commerce style product listings with filtering and sorting, rendered dynamically on client.";
   capabilities = [
     "Grid and list view layouts",
     "Product filtering by category and attributes",
@@ -441,21 +470,55 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
   }): Promise<TemplateConfig<"productCatalog">> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig } = params;
 
-    const defaultProducts = this.generateProducts(useCase, customData, images);
-    const defaultCategories = this.generateCategories(useCase, customData);
+    // Actual product data will now go into customData for the client to fetch
+    const generatedProducts = this._generateSampleProducts(useCase, customData, images);
+    const finalCustomData = {
+      ...(customData || {}),
+      // The generator provides the actual list of products here
+      // The client will use itemDataSource to find this list
+      productsList: generatedProducts
+    };
 
     return {
       templateType: "productCatalog",
       title,
-      description: description || `${title} - Discover and browse our product collection`,
+      description: description || `${title} - Browse our dynamic product collection`,
       theme: theme || "system",
       primaryColor,
       fullScreen: fullScreen || false,
       closeButtonText: "Close",
       layout: customConfig?.layout || "grid",
-      products: customConfig?.products || defaultProducts,
-      categories: customConfig?.categories || defaultCategories,
-      sorting: {
+      columns: customConfig?.columns || 3,
+
+      itemDataSource: "customData.productsList", // Points to where the data is
+      itemSchema: customConfig?.itemSchema || { // Default item schema
+        fields: [
+          { id: "productImage", type: "image", source: "item.imageUrl", altSource: "item.name", style: "product-image" },
+          { id: "productName", type: "text", source: "item.name", style: "title" },
+          { id: "productDescription", type: "text", source: "item.description", style: "description", condition: "item.descriptionExists" },
+          { id: "productPrice", type: "text", source: "item.price", style: "price", prefix: "$" },
+          { id: "productCategory", type: "badge", source: "item.category", style: "tag", condition: "item.categoryExists"},
+          {
+            id: "viewDetailsButton",
+            type: "button" as const, // Ensure type is literal for TS
+            label: "View Details",
+            actionDefinition: {
+              id: "viewProductDetails",
+              trigger: "onClick" as const,
+              type: "CUSTOM_EVENT" as const,
+              eventName: "productInteraction",
+              payload: {
+                actionType: "viewDetails",
+                productId: "{{item.id}}", // Placeholder syntax for item's id
+                productName: "{{item.name}}" // Placeholder for item's name
+              }
+            }
+          }
+        ]
+      },
+
+      categories: customConfig?.categories || this._generateCategories(useCase, finalCustomData),
+      sorting: customConfig?.sorting || {
         enabled: true,
         options: [
           { label: "Featured", value: "featured" },
@@ -465,108 +528,31 @@ export class ProductCatalogGenerator implements TemplateGenerator<"productCatalo
           { label: "Rating", value: "rating" }
         ]
       },
-      actionButtonText: "View All Products"
+      // customData: finalCustomData, // This is the first one, ensure it's correctly defined as finalCustomData
+      // Other base fields:
+      actionButtonText: customConfig?.actionButtonText || "View All Products",
+      customData: finalCustomData, // This is the one that should remain if it's the last one intended.
     };
   }
 
-  private generateProducts(useCase?: string, customData?: Record<string, any>, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>) {
+  // Renamed from generateProducts to avoid conflict if we keep old structure temporarily
+  private _generateSampleProducts(useCase?: string, customData?: Record<string, any>, images?: Array<{ id: string; url: string; alt?: string; caption?: string; category?: string }>) {
     // Use provided images for products if available
     const productImages = images?.filter(img => img.category === 'product') || [];
-    
-    const products = [
-      {
-        id: "prod-1",
-        name: customData?.productNames?.[0] || "Premium Wireless Headphones",
-        description: customData?.productDescriptions?.[0] || "High-quality wireless headphones with noise cancellation and premium sound quality.",
-        price: customData?.productPrices?.[0] || 299.99,
-        currency: customData?.currency || "USD",
-        imageUrl: productImages[0]?.url || "/placeholder.jpg?height=300&width=300",
-        images: productImages.slice(0, 3).map(img => img.url),
-        rating: customData?.productRatings?.[0] || 4.8,
-        reviewCount: customData?.reviewCounts?.[0] || 124,
-        badges: customData?.productBadges?.[0] || ["Best Seller", "Premium"],
-        category: "Electronics",
-        inStock: true
-      },
-      {
-        id: "prod-2",
-        name: "Smart Fitness Tracker",
-        description: "Advanced fitness tracker with heart rate monitoring and GPS functionality.",
-        price: 199.99,
-        currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
-        rating: 4.6,
-        badges: ["New"],
-        category: "Electronics",
-        inStock: true
-      },
-      {
-        id: "prod-3",
-        name: "Ergonomic Office Chair",
-        description: "Comfortable ergonomic office chair with lumbar support and adjustable height.",
-        price: 449.99,
-        currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
-        rating: 4.7,
-        badges: ["Popular"],
-        category: "Furniture",
-        inStock: false
-      },
-      {
-        id: "prod-4",
-        name: "Professional Camera Lens",
-        description: "High-performance camera lens for professional photography and videography.",
-        price: 899.99,
-        currency: "USD",
-        imageUrl: "/placeholder.jpg?height=300&width=300",
-        rating: 4.9,
-        badges: ["Professional"],
-        category: "Photography",
-        inStock: true
-      }
+    return [
+      { id: "prod-1", name: "Dynamic Headphones", description: "Noise cancelling.", price: 299.99, imageUrl: productImages[0]?.url || "/placeholder.jpg?height=200&width=200", category: "Electronics", descriptionExists: true, categoryExists: true },
+      { id: "prod-2", name: "Smart Tracker", description: "GPS enabled.", price: 199.99, imageUrl: productImages[1]?.url || "/placeholder.jpg?height=200&width=200", category: "Wearables", descriptionExists: true, categoryExists: true },
+      { id: "prod-3", name: "Minimalist Watch", price: 149.99, imageUrl: productImages[2]?.url || "/placeholder.jpg?height=200&width=200", category: "Accessories", categoryExists: true }, // No description for testing condition
     ];
-
-    if (useCase?.toLowerCase().includes("digital")) {
-      return products.map(p => ({
-        ...p,
-        name: `Digital ${p.name}`,
-        description: `Digital version of ${p.description}`,
-        price: p.price * 0.7 // Digital products typically cost less
-      }));
-    }
-
-    return products;
   }
 
-  private generateCategories(useCase?: string, customData?: Record<string, any>) {
-    const categoryImages = customData?.categoryImages || [];
-    const categoryNames = customData?.categoryNames || [];
-    
-    if (categoryNames.length > 0) {
-      return categoryNames.map((name: string, index: number) => ({
-        id: `category-${index + 1}`,
-        name,
-        imageUrl: categoryImages[index] || undefined,
-        description: customData?.categoryDescriptions?.[index] || undefined
-      }));
-    }
-
-    // Default categories based on use case
-    if (useCase?.toLowerCase().includes("book")) {
-      return [
-        { id: "fiction", name: "Fiction", description: "Novels and story collections" },
-        { id: "non-fiction", name: "Non-Fiction", description: "Educational and factual books" },
-        { id: "sci-fi", name: "Science Fiction", description: "Futuristic and speculative fiction" },
-        { id: "mystery", name: "Mystery", description: "Thriller and detective stories" }
+  private _generateCategories(useCase?: string, customData?: Record<string, any>) {
+    // ... (can remain similar, possibly deriving from the generated products if needed)
+     return [
+        { id: "electronics", name: "Electronics" },
+        { id: "wearables", name: "Wearables" },
+        { id: "accessories", name: "Accessories" },
       ];
-    }
-
-    return [
-      { id: "electronics", name: "Electronics", description: "Latest gadgets and devices" },
-      { id: "furniture", name: "Furniture", description: "Home and office furniture" },
-      { id: "photography", name: "Photography", description: "Cameras and photography equipment" },
-      { id: "accessories", name: "Accessories", description: "Fashion and tech accessories" }
-    ];
   }
 }
 
@@ -758,14 +744,15 @@ export class FormGenerator implements TemplateGenerator<"form"> {
               type: "text" as const,
               label: "Team Name (Optional)",
               placeholder: "Enter your team name if applicable",
-              required: false
+              required: false,
+              renderCondition: "customData.hasTeam === true" // Example condition
             },
             {
-              id: "hasTeam",
+              id: "hasTeam", // This field might control the condition
               type: "checkbox" as const,
               label: "Team Status",
               options: [
-                { label: "I have a pre-formed team", value: "hasTeam" },
+                { label: "I have a pre-formed team", value: "hasTeamTrue" }, // Value that can be checked
                 { label: "Looking for teammates", value: "needTeam" }
               ]
             }

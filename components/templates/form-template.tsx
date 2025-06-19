@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { evaluateCondition } from "@/lib/condition-evaluator"
 
 interface FormTemplateProps {
   config: any
@@ -19,7 +20,8 @@ interface FormTemplateProps {
 
 export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
   const [formData, setFormData] = useState<Record<string, any>>({})
-  const [currentSection, setCurrentSection] = useState(0)
+  // currentSection will store the ID of the section
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleInputChange = (fieldId: string, value: any) => {
@@ -34,39 +36,29 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
   }
 
   const validateField = (field: any) => {
-    if (field.required && (!formData[field.id] || formData[field.id] === "")) {
-      return `${field.label} is required`
+    const value = formData[field.id];
+    if (field.required && (value === undefined || value === "" || (Array.isArray(value) && value.length === 0))) {
+      return field.validation?.message || `${field.label} is required`;
     }
-    return ""
-  }
 
-  const validateCurrentSection = () => {
-    const section = config.sections[currentSection]
-    const newErrors: Record<string, string> = {}
-    let hasErrors = false
-
-    section.fields.forEach((field: any) => {
-      const error = validateField(field)
-      if (error) {
-        newErrors[field.id] = error
-        hasErrors = true
+    if (field.validation && value) { // Only validate if there's a value and validation rules
+      if (field.validation.minLength && String(value).length < field.validation.minLength) {
+        return field.validation.message || `${field.label} must be at least ${field.validation.minLength} characters`;
       }
-    })
-
-    setErrors(newErrors)
-    return !hasErrors
-  }
-
-  const handleNext = () => {
-    if (validateCurrentSection()) {
-      setCurrentSection(Math.min(currentSection + 1, config.sections.length - 1))
+      if (field.validation.maxLength && String(value).length > field.validation.maxLength) {
+        return field.validation.message || `${field.label} must be no more than ${field.validation.maxLength} characters`;
+      }
+      if (field.validation.pattern) {
+        const regex = new RegExp(field.validation.pattern);
+        if (!regex.test(String(value))) {
+          return field.validation.message || `${field.label} format is invalid`;
+        }
+      }
     }
-  }
+    return "";
+  };
 
-  const handlePrev = () => {
-    setCurrentSection(Math.max(currentSection - 1, 0))
-  }
-
+  // Original handleSubmit, ensure this is the one being used by the submit button
   const handleSubmit = () => {
     if (validateCurrentSection()) {
       onDataChange({ ...formData, _action: "submit" })
@@ -118,6 +110,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
               rows={4}
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
           </div>
         )
 
@@ -141,6 +134,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
               </SelectContent>
             </Select>
             {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
           </div>
         )
 
@@ -174,6 +168,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
                 ))}
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
+              {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
             </div>
           )
         } else {
@@ -192,6 +187,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
                 </Label>
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
+              {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
             </div>
           )
         }
@@ -214,8 +210,66 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
               ))}
             </RadioGroup>
             {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
           </div>
         )
+
+      case "date":
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(field.id, e.target.value)}
+              className={error ? "border-red-500" : ""}
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
+          </div>
+        );
+
+      case "time":
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="time"
+              value={value}
+              onChange={(e) => handleInputChange(field.id, e.target.value)}
+              className={error ? "border-red-500" : ""}
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
+          </div>
+        );
+
+      case "file":
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="file"
+              // For file inputs, value is not controlled directly in the same way
+              onChange={(e) => handleInputChange(field.id, e.target.files ? e.target.files[0] : null)}
+              className={error ? "border-red-500" : ""}
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {field.helpText && <p className="text-gray-500 text-sm">{field.helpText}</p>}
+          </div>
+        );
 
       default:
         return (
@@ -226,15 +280,114 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
     }
   }
 
-  const currentSectionData = config.sections[currentSection]
-  const progress = ((currentSection + 1) / config.sections.length) * 100
+  const visibleSections = config.sections.filter((section: any) =>
+    evaluateCondition(section.renderCondition, { ...config.customData, ...formData })
+  );
+
+  if (visibleSections.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <p>No sections are currently visible based on the provided conditions.</p>
+        {config.branding?.logoUrl && (
+          <div className="flex items-center space-x-2 mt-4 justify-center">
+            <img src={config.branding.logoUrl} alt={config.branding.companyName || 'Logo'} className="h-10 w-auto" />
+            {config.branding.companyName && <span className="text-lg font-semibold">{config.branding.companyName}</span>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Initialize currentSection state
+  React.useEffect(() => {
+    const firstVisibleSectionId = visibleSections[0]?.id;
+    if (firstVisibleSectionId) {
+      if (!visibleSections.some(s => s.id === currentSection)) {
+        setCurrentSection(firstVisibleSectionId);
+      }
+    } else {
+      setCurrentSection(null); // No visible sections
+    }
+    // formData is added as a dependency because visibleSections can change if form data affects a section's renderCondition
+  }, [config.sections, config.customData, formData]);
+
+
+  const currentSectionIndex = visibleSections.findIndex(s => s.id === currentSection);
+  const currentSectionData = currentSectionIndex !== -1 ? visibleSections[currentSectionIndex] : null;
+
+  const progress = currentSectionData && visibleSections.length > 0 ?
+                   ((currentSectionIndex + 1) / visibleSections.length) * 100 : 0;
+
+  const handleNextInternal = () => {
+    if (validateCurrentSectionInternal() && currentSectionData) {
+      if (currentSectionIndex < visibleSections.length - 1) {
+        setCurrentSection(visibleSections[currentSectionIndex + 1].id);
+      }
+    }
+  };
+
+  const handlePrevInternal = () => {
+    if (currentSectionData && currentSectionIndex > 0) {
+      setCurrentSection(visibleSections[currentSectionIndex - 1].id);
+    }
+  };
+
+  const validateCurrentSectionInternal = () => {
+    if (!currentSectionData) return true; // No section to validate or section not found
+
+    const newErrors: Record<string, string> = {};
+    let hasErrors = false;
+
+    currentSectionData.fields
+      .filter((field: any) => evaluateCondition(field.renderCondition, { ...config.customData, ...formData }))
+      .forEach((field: any) => {
+        const error = validateField(field);
+        if (error) {
+          newErrors[field.id] = error;
+          hasErrors = true;
+        }
+      });
+
+    setErrors(newErrors);
+    return !hasErrors;
+  };
+
+
+  if (!currentSectionData) {
+    // This can happen if currentSection is null (e.g., no visible sections initially)
+    // or if currentSection ID doesn't match any visible section (should be rare with useEffect).
+    // Render loading state or minimal UI.
+    return (
+      <div className="p-8 text-center">
+        <p>Loading form or no sections to display.</p>
+         {config.headerImage && (
+            <img src={config.headerImage} alt={config.title || 'Form Header'} className="w-full h-auto max-h-60 object-cover rounded-md my-4" />
+         )}
+         {config.branding?.logoUrl && (
+            <div className="flex items-center space-x-2 mt-4 justify-center">
+                <img src={config.branding.logoUrl} alt={config.branding.companyName || 'Logo'} className="h-10 w-auto" />
+                {config.branding.companyName && <span className="text-lg font-semibold">{config.branding.companyName}</span>}
+            </div>
+         )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {config.showProgress && config.sections.length > 1 && (
+      {config.headerImage && (
+        <img src={config.headerImage} alt={config.title || 'Form Header'} className="w-full h-auto max-h-60 object-cover rounded-md" />
+      )}
+      {config.branding?.logoUrl && (
+        <div className="flex items-center space-x-2">
+          <img src={config.branding.logoUrl} alt={config.branding.companyName || 'Logo'} className="h-10 w-auto" />
+          {config.branding.companyName && <span className="text-lg font-semibold">{config.branding.companyName}</span>}
+        </div>
+      )}
+      {config.showProgress && visibleSections.length > 1 && (
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Step {currentSection + 1} of {config.sections.length}</span>
+            <span>Step {currentSectionIndex + 1} of {visibleSections.length}</span>
             <span>{Math.round(progress)}% Complete</span>
           </div>
           <Progress value={progress} className="w-full" />
@@ -250,15 +403,15 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
         </CardHeader>
         <CardContent>
           <div className={`grid gap-6 ${currentSectionData.columns > 1 ? `grid-cols-${currentSectionData.columns}` : 'grid-cols-1'}`}>
-            {currentSectionData.fields.map((field: any) => renderField(field))}
+            {currentSectionData.fields.filter((field: any) => evaluateCondition(field.renderCondition, { ...config.customData, ...formData })).map((field: any) => renderField(field))}
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-between">
         <div>
-          {currentSection > 0 && (
-            <Button variant="outline" onClick={handlePrev}>
+          {currentSectionIndex > 0 && (
+            <Button variant="outline" onClick={handlePrevInternal}>
               Previous
             </Button>
           )}
@@ -269,8 +422,8 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
               {config.cancelButtonText}
             </Button>
           )}
-          {currentSection < config.sections.length - 1 ? (
-            <Button onClick={handleNext}>Next</Button>
+          {currentSectionIndex < visibleSections.length - 1 ? (
+            <Button onClick={handleNextInternal}>Next</Button>
           ) : (
             <Button onClick={handleSubmit}>
               {config.submitButtonText || "Submit"}
@@ -278,6 +431,25 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
           )}
         </div>
       </div>
+      {(config.footer || config.branding?.contactInfo) && (
+        <div className="mt-6 pt-4 border-t">
+          {config.branding?.contactInfo && (
+            <p className="text-sm text-gray-600 mb-2">{config.branding.contactInfo}</p>
+          )}
+          {config.footer?.text && (
+            <p className="text-sm text-gray-600">{config.footer.text}</p>
+          )}
+          {config.footer?.links && config.footer.links.length > 0 && (
+            <div className="mt-2 space-x-4">
+              {config.footer.links.map((link: { text: string; url: string }) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                  {link.text}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
