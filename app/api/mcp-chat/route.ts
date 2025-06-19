@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateText, tool, CoreMessage } from 'ai';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { google } from '@ai-sdk/google' 
+import { openai } from '@ai-sdk/openai';
+import { groq } from '@ai-sdk/groq';
 import { fromContainerMetadata } from '@aws-sdk/credential-providers'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
@@ -282,18 +285,38 @@ export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
     
-    // Log session status for debugging
-    console.log('Session status:', getSessionStatus());
-    
-    const bedrock = await initializeBedrock();
-    
-    // Get model ID from environment variable with fallback to current default
-    const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-sonnet-4-20250514-v1:0';
-    
-    console.log('Using Bedrock model:', modelId);
+    // Determine model provider and model ID from environment variables
+    const modelProvider = process.env.MODEL_PROVIDER || 'google';
+    let model;
+
+    switch (modelProvider.toLowerCase()) {
+      case 'google':
+        model = google(process.env.GOOGLE_MODEL_ID || 'gemini-1.5-flash-latest');
+        break;
+      case 'bedrock': {
+        const bedrock = await initializeBedrock();
+        const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-sonnet-4-20250514-v1:0';
+        model = bedrock(modelId);
+        break;
+      }
+      case 'groq': {
+        // and set GROQ_MODEL_ID in env
+        model = groq(process.env.GROQ_MODEL_ID || 'llama3-70b-8192');
+        break;
+      }
+      case 'openai': {
+        model = openai(process.env.OPENAI_MODEL_ID || 'gpt-4o');
+        break;
+      }
+      default:
+        const bedrock = await initializeBedrock();
+        const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-sonnet-4-20250514-v1:0';
+        model = bedrock(modelId);
+        break;
+    }
     
     const completion = await generateText({
-      model: bedrock(modelId),
+      model,
       messages,
       tools: {
         generateUITemplate: mcpUITool,

@@ -1,3 +1,84 @@
+# Generative UI Chatbot: Bedrock, Google, OpenAI, Groq Support
+
+A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP). You can run this project locally with Google Gemini, OpenAI, or Groq models, or deploy it with Amazon Bedrock for enterprise-grade infrastructure.
+
+---
+
+## 🚀 Features
+
+- **Multi-Provider Model Support:**
+  - **Local:** Use Google Gemini, OpenAI (GPT-4o, GPT-4, GPT-3.5), or Groq (Llama 3, Mixtral, etc.) by setting the `MODEL_PROVIDER` environment variable.
+  - **Production/Cloud:** Deploy with Amazon Bedrock (Claude 4 Sonnet, etc.) for secure, scalable, enterprise workloads.
+- **20+ UI Template Types:** Dashboards, forms, tables, analytics, e-commerce, and more
+- **Rich Data Generation:** Contextual, realistic data for each template type
+- **Modern UI:** Built with Next.js, Tailwind CSS, and shadcn/ui
+- **MCP Server:** Type-safe, extensible, and easy to customize
+
+---
+
+## 🏗️ Architecture
+
+### Local Development
+
+- **Run locally with Google, OpenAI, or Groq models**
+- No AWS credentials required for local use (unless using Bedrock)
+- Switch providers by setting `MODEL_PROVIDER=google`, `MODEL_PROVIDER=openai`, or `MODEL_PROVIDER=groq` in your `.env.local`
+
+### Production (AWS Bedrock)
+
+- **Enterprise deployment** with ECS Fargate, CloudFront, VPC, and Bedrock
+- Secure, scalable, and cost-optimized
+
+---
+
+## ⚡ Quick Start
+
+### 1. Clone and Install
+```bash
+git clone <repository-url>
+cd Generative-UI-chat
+npm install
+```
+
+### 2. Configure Environment
+
+#### Local (Google, OpenAI, Groq)
+- Copy `.env.example` to `.env.local`
+- Set `MODEL_PROVIDER` to `google`, `openai`, or `groq`
+- Set the corresponding model ID and API key variables (see below)
+
+#### Bedrock (AWS)
+- Set `MODEL_PROVIDER=bedrock` and configure AWS credentials as before
+
+### 3. Start Development
+```bash
+npm run dev
+```
+
+---
+
+## 🌐 Deployment Options
+
+- **Local:** Google Gemini, OpenAI, or Groq (no AWS required)
+- **AWS:** Bedrock (Claude, Titan, etc.) with full enterprise stack
+
+---
+
+## 🔑 Environment Variables
+
+| Provider | Required Variables |
+|----------|-------------------|
+| Google   | `GOOGLE_API_KEY`, `GOOGLE_MODEL_ID` |
+| OpenAI   | `OPENAI_API_KEY`, `OPENAI_MODEL_ID` |
+| Groq     | `GROQ_API_KEY`, `GROQ_MODEL_ID`     |
+| Bedrock  | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `BEDROCK_MODEL_ID` |
+
+---
+
+## 📖 For full usage, deployment, and troubleshooting, see the rest of this README below.
+
+---
+
 # Generative UI Chatbot with Amazon Bedrock
 
 A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP) and Claude 4 Sonnet via Amazon Bedrock. The system features a sophisticated MCP server that can generate over 20 different types of UI templates with realistic data and configurations.
