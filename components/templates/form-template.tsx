@@ -20,7 +20,8 @@ interface FormTemplateProps {
 
 export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
   const [formData, setFormData] = useState<Record<string, any>>({})
-  const [currentSection, setCurrentSection] = useState(0)
+  // currentSection will store the ID of the section
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleInputChange = (fieldId: string, value: any) => {
@@ -57,33 +58,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
     return "";
   };
 
-  const validateCurrentSection = () => {
-    const section = config.sections[currentSection]
-    const newErrors: Record<string, string> = {}
-    let hasErrors = false
-
-    section.fields.forEach((field: any) => {
-      const error = validateField(field)
-      if (error) {
-        newErrors[field.id] = error
-        hasErrors = true
-      }
-    })
-
-    setErrors(newErrors)
-    return !hasErrors
-  }
-
-  const handleNext = () => {
-    if (validateCurrentSection()) {
-      setCurrentSection(Math.min(currentSection + 1, config.sections.length - 1))
-    }
-  }
-
-  const handlePrev = () => {
-    setCurrentSection(Math.max(currentSection - 1, 0))
-  }
-
+  // Original handleSubmit, ensure this is the one being used by the submit button
   const handleSubmit = () => {
     if (validateCurrentSection()) {
       onDataChange({ ...formData, _action: "submit" })
@@ -323,39 +298,48 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
     );
   }
 
-  // Adjust currentSection if it's out of bounds due to filtering
-  const adjustedCurrentSection = Math.min(currentSection, visibleSections.length - 1);
-  const currentSectionData = visibleSections[adjustedCurrentSection];
+  // Initialize currentSection state
+  React.useEffect(() => {
+    const firstVisibleSectionId = visibleSections[0]?.id;
+    if (firstVisibleSectionId) {
+      if (!visibleSections.some(s => s.id === currentSection)) {
+        setCurrentSection(firstVisibleSectionId);
+      }
+    } else {
+      setCurrentSection(null); // No visible sections
+    }
+    // formData is added as a dependency because visibleSections can change if form data affects a section's renderCondition
+  }, [config.sections, config.customData, formData]);
 
-  const progress = visibleSections.length > 0 ? ((visibleSections.findIndex(s => s.id === currentSectionData.id) + 1) / visibleSections.length) * 100 : 0;
 
-  // Update handleNext and handlePrev to work with visibleSections
-  const handleNext = () => {
-    if (validateCurrentSection()) {
-      const currentVisibleIndex = visibleSections.findIndex(s => s.id === currentSectionData.id);
-      if (currentVisibleIndex < visibleSections.length - 1) {
-        setCurrentSection(currentVisibleIndex + 1);
+  const currentSectionIndex = visibleSections.findIndex(s => s.id === currentSection);
+  const currentSectionData = currentSectionIndex !== -1 ? visibleSections[currentSectionIndex] : null;
+
+  const progress = currentSectionData && visibleSections.length > 0 ?
+                   ((currentSectionIndex + 1) / visibleSections.length) * 100 : 0;
+
+  const handleNextInternal = () => {
+    if (validateCurrentSectionInternal() && currentSectionData) {
+      if (currentSectionIndex < visibleSections.length - 1) {
+        setCurrentSection(visibleSections[currentSectionIndex + 1].id);
       }
     }
   };
 
-  const handlePrev = () => {
-    const currentVisibleIndex = visibleSections.findIndex(s => s.id === currentSectionData.id);
-    if (currentVisibleIndex > 0) {
-      setCurrentSection(currentVisibleIndex - 1);
+  const handlePrevInternal = () => {
+    if (currentSectionData && currentSectionIndex > 0) {
+      setCurrentSection(visibleSections[currentSectionIndex - 1].id);
     }
   };
 
-  const validateCurrentSection = () => {
-    // Important: Ensure validation targets fields within the *currently displayed* section (currentSectionData)
-    // and that those fields are also visible based on their own renderConditions.
-    const section = currentSectionData; // Already points to the visible section
-    if (!section) return true; // Should not happen if visibleSections.length > 0
+  const validateCurrentSectionInternal = () => {
+    if (!currentSectionData) return true; // No section to validate or section not found
 
     const newErrors: Record<string, string> = {};
     let hasErrors = false;
 
-    section.fields.filter((field: any) => evaluateCondition(field.renderCondition, { ...config.customData, ...formData }))
+    currentSectionData.fields
+      .filter((field: any) => evaluateCondition(field.renderCondition, { ...config.customData, ...formData }))
       .forEach((field: any) => {
         const error = validateField(field);
         if (error) {
@@ -368,6 +352,26 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
     return !hasErrors;
   };
 
+
+  if (!currentSectionData) {
+    // This can happen if currentSection is null (e.g., no visible sections initially)
+    // or if currentSection ID doesn't match any visible section (should be rare with useEffect).
+    // Render loading state or minimal UI.
+    return (
+      <div className="p-8 text-center">
+        <p>Loading form or no sections to display.</p>
+         {config.headerImage && (
+            <img src={config.headerImage} alt={config.title || 'Form Header'} className="w-full h-auto max-h-60 object-cover rounded-md my-4" />
+         )}
+         {config.branding?.logoUrl && (
+            <div className="flex items-center space-x-2 mt-4 justify-center">
+                <img src={config.branding.logoUrl} alt={config.branding.companyName || 'Logo'} className="h-10 w-auto" />
+                {config.branding.companyName && <span className="text-lg font-semibold">{config.branding.companyName}</span>}
+            </div>
+         )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -383,7 +387,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
       {config.showProgress && visibleSections.length > 1 && (
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Step {visibleSections.findIndex(s => s.id === currentSectionData.id) + 1} of {visibleSections.length}</span>
+            <span>Step {currentSectionIndex + 1} of {visibleSections.length}</span>
             <span>{Math.round(progress)}% Complete</span>
           </div>
           <Progress value={progress} className="w-full" />
@@ -406,8 +410,8 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
 
       <div className="flex justify-between">
         <div>
-          {visibleSections.findIndex(s => s.id === currentSectionData.id) > 0 && (
-            <Button variant="outline" onClick={handlePrev}>
+          {currentSectionIndex > 0 && (
+            <Button variant="outline" onClick={handlePrevInternal}>
               Previous
             </Button>
           )}
@@ -418,8 +422,8 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
               {config.cancelButtonText}
             </Button>
           )}
-          {visibleSections.findIndex(s => s.id === currentSectionData.id) < visibleSections.length - 1 ? (
-            <Button onClick={handleNext}>Next</Button>
+          {currentSectionIndex < visibleSections.length - 1 ? (
+            <Button onClick={handleNextInternal}>Next</Button>
           ) : (
             <Button onClick={handleSubmit}>
               {config.submitButtonText || "Submit"}
