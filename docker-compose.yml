@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  generative-ui-chat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      # For local development with explicit credentials (optional)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      # For ECS deployment, IAM roles will be used automatically when no access keys are provided
+      - AWS_SDK_LOAD_CONFIG=1
+      - AWS_EC2_METADATA_DISABLED=false
+    volumes:
+      # Mount AWS credentials if using profiles (optional for local development)
+      - ~/.aws:/home/nextjs/.aws:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Add user mapping to avoid permission issues
+    user: "1001:1001"
+
+networks:
+  default:
+    name: generative-ui-chat-network

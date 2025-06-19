@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateText, tool, CoreMessage } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic'
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { fromContainerMetadata } from '@aws-sdk/credential-providers'
 import { z } from 'zod';
 import { getMCPClient } from '@/lib/mcp-client';
 
@@ -198,12 +199,101 @@ const getTemplateExamplesTool = tool({
   }
 });
 
+// Bedrock client cache with session management
+let cachedBedrockClient: any = null;
+let sessionExpiration: Date | null = null;
+let lastCredentials: any = null;
+
+async function initializeBedrock() {
+  try {
+    // Check if we have a valid cached client
+    if (cachedBedrockClient && sessionExpiration) {
+      const now = new Date();
+      const timeUntilExpiry = sessionExpiration.getTime() - now.getTime();
+      const fiveMinutesInMs = 5 * 60 * 1000; // 5 minutes buffer
+      
+      // If session expires in more than 5 minutes, reuse cached client
+      if (timeUntilExpiry > fiveMinutesInMs) {
+        console.log('Using cached Bedrock client, expires in:', Math.round(timeUntilExpiry / 1000 / 60), 'minutes');
+        return cachedBedrockClient;
+      } else {
+        console.log('Bedrock session expiring soon, refreshing client');
+      }
+    }
+
+    console.log('Initializing new Bedrock client with container metadata...');
+    
+    // Get fresh credentials from container metadata
+    const credentialProvider = fromContainerMetadata();
+    const credentials = await credentialProvider();
+    
+    console.log('Container metadata credentials resolved:', {
+      accessKeyId: credentials.accessKeyId?.substring(0, 10) + '...',
+      hasSecretKey: !!credentials.secretAccessKey,
+      hasSessionToken: !!credentials.sessionToken,
+      expiration: credentials.expiration
+    });
+
+    // Create new Bedrock provider
+    const bedrock = createAmazonBedrock({
+      region: process.env.AWS_REGION || 'us-east-1',
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
+      sessionToken: credentials.sessionToken,
+    });
+
+    // Cache the client and session info
+    cachedBedrockClient = bedrock;
+    sessionExpiration = credentials.expiration || null;
+    lastCredentials = {
+      accessKeyId: credentials.accessKeyId?.substring(0, 10) + '...',
+      expiration: credentials.expiration
+    };
+
+    console.log('Bedrock client cached, session expires at:', sessionExpiration);
+    return bedrock;
+  } catch (error) {
+    console.error('Failed to initialize Bedrock with container metadata:', error);
+    // Clear cache on error
+    cachedBedrockClient = null;
+    sessionExpiration = null;
+    lastCredentials = null;
+    throw error;
+  }
+}
+// Helper function to get session status for debugging
+function getSessionStatus() {
+  if (!sessionExpiration) return 'No session';
+  
+  const now = new Date();
+  const timeUntilExpiry = sessionExpiration.getTime() - now.getTime();
+  const minutesUntilExpiry = Math.round(timeUntilExpiry / 1000 / 60);
+  
+  return {
+    hasSession: !!cachedBedrockClient,
+    expiresAt: sessionExpiration.toISOString(),
+    minutesUntilExpiry,
+    isValid: timeUntilExpiry > 5 * 60 * 1000, // 5 minute buffer
+    lastCredentials: lastCredentials?.accessKeyId
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { messages }: { messages: CoreMessage[] } = await req.json()
-
+    
+    // Log session status for debugging
+    console.log('Session status:', getSessionStatus());
+    
+    const bedrock = await initializeBedrock();
+    
+    // Get model ID from environment variable with fallback to current default
+    const modelId = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-sonnet-4-20250514-v1:0';
+    
+    console.log('Using Bedrock model:', modelId);
+    
     const completion = await generateText({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: bedrock(modelId),
       messages,
       tools: {
         generateUITemplate: mcpUITool,
@@ -212,7 +302,7 @@ export async function POST(req: NextRequest) {
       },
       toolChoice: 'auto',
       temperature: 0.7,
-      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. 
+      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. You are powered by Claude 4 Sonnet via Amazon Bedrock. 
 
 CAPABILITIES:
 - Generate 20+ different types of UI templates (dashboards, forms, tables, analytics, etc.)
@@ -267,9 +357,69 @@ Remember: The MCP server generates rich, realistic sample data for each template
     })
   } catch (error) {
     console.error('Error in chat route:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    
+    // Handle specific Bedrock errors
+    if (error && typeof error === 'object' && 'name' in error) {
+      const errorName = (error as any).name || (error as any).$fault;
+      const errorMessage = (error as any).message || 'Unknown error';
+      const metadata = (error as any).$metadata || {};
+      
+      // Log detailed error information
+      console.error('Bedrock Error Details:', {
+        name: errorName,
+        message: errorMessage,
+        fault: (error as any).$fault,
+        metadata: metadata,
+        requestId: (error as any).$metadata?.requestId,
+        timestamp: new Date().toISOString()
+      });
+
+      // Handle specific error types
+      switch (errorName) {
+        case 'ThrottlingException':
+          const retryAfter = metadata.totalRetryDelay || 30; // Use totalRetryDelay or default to 30 seconds
+          return NextResponse.json({
+            error: 'Rate limit exceeded',
+            message: 'Too many requests. Please wait a moment before trying again.',
+            details: 'The Bedrock service is currently throttling requests. This usually resolves within a few seconds.',
+            retryAfter: retryAfter
+          }, { status: 429 });
+
+        case 'ValidationException':
+          return NextResponse.json({
+            error: 'Invalid request',
+            message: 'The request contains invalid parameters.',
+            details: errorMessage
+          }, { status: 400 });
+
+        case 'AccessDeniedException':
+          return NextResponse.json({
+            error: 'Access denied',
+            message: 'Insufficient permissions to access the requested model.',
+            details: 'Please check IAM permissions for Bedrock access.'
+          }, { status: 403 });
+
+        case 'ServiceQuotaExceededException':
+          return NextResponse.json({
+            error: 'Service quota exceeded',
+            message: 'The service quota has been exceeded.',
+            details: 'Please try again later or contact support to increase quotas.'
+          }, { status: 429 });
+
+        default:
+          return NextResponse.json({
+            error: 'Bedrock service error',
+            message: `Service error: ${errorMessage}`,
+            details: `Error type: ${errorName}`
+          }, { status: 500 });
+      }
+    }
+
+    // Generic error fallback
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: 'An unexpected error occurred while processing your request.',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

@@ -226,7 +226,7 @@ Let's build something amazing together! ✨`,
               <CardTitle className="flex items-center gap-2">
                 MCP UI Template Assistant
                 <Badge variant="secondary" className="text-xs">
-                  Powered by Claude Sonnet
+                  Powered by Claude 4 Sonnet
                 </Badge>
               </CardTitle>
               <CardDescription>
