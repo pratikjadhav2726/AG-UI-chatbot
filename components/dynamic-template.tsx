@@ -22,6 +22,13 @@ import { MapTemplate } from "@/components/templates/map-template"
 import { KanbanTemplate } from "@/components/templates/kanban-template"
 import { FeedTemplate } from "@/components/templates/feed-template"
 import { FormTemplate } from "@/components/templates/form-template"
+import { AnalyticsTemplate } from "@/components/templates/analytics-template";
+import { MarketplaceTemplate } from "@/components/templates/marketplace-template";
+import { EcommerceTemplate } from "@/components/templates/ecommerce-template";
+import { BlogTemplate } from "@/components/templates/blog-template";
+import { PortfolioTemplate } from "@/components/templates/portfolio-template";
+import { resolvePayload } from '@/lib/payload-resolver';
+import type { ActionSchema } from '@/lib/template-schemas';
 
 interface DynamicTemplateProps {
   config: any
@@ -37,11 +44,28 @@ export function DynamicTemplate({ config, onInteraction, onClose }: DynamicTempl
   }
 
   const handleSubmit = () => {
-    onInteraction({
-      templateType: config.templateType,
-      data,
-    })
-  }
+    const submitAction = config.actions?.find((a: ActionSchema) => a.trigger === "onSubmit");
+    if (submitAction) {
+      if (submitAction.confirmationMessage) {
+        if (!window.confirm(submitAction.confirmationMessage)) return;
+      }
+
+      const resolvedPayload = resolvePayload(submitAction.payload || submitAction.arguments, { form: data, customData: config.customData });
+
+      onInteraction({
+        type: submitAction.type, // MCP_TOOL_CALL, CUSTOM_EVENT, NAVIGATE, API_CALL
+        actionId: submitAction.id,
+        // Pass specific fields based on type
+        ...(submitAction.type === 'MCP_TOOL_CALL' && { toolName: submitAction.toolName, arguments: resolvedPayload }),
+        ...(submitAction.type === 'CUSTOM_EVENT' && { eventName: submitAction.eventName, payload: resolvedPayload }),
+        ...(submitAction.type === 'NAVIGATE' && { navigateTo: submitAction.navigateTo }),
+        ...(submitAction.type === 'API_CALL' && { apiUrl: submitAction.apiUrl, apiMethod: submitAction.apiMethod, payload: resolvedPayload }),
+      });
+    } else {
+      // Fallback or default behavior if no specific onSubmit action is defined
+      onInteraction({ templateType: config.templateType, data });
+    }
+  };
 
   // Render the appropriate template based on the template type
   const renderTemplate = () => {
@@ -77,45 +101,15 @@ export function DynamicTemplate({ config, onInteraction, onClose }: DynamicTempl
       case "form":
         return <FormTemplate config={config} onDataChange={handleDataChange} />
       case "marketplace":
-        return <div className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Marketplace Template</h3>
-          <p className="text-gray-600">Multi-vendor marketplace with advanced filtering</p>
-          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
+        return <MarketplaceTemplate config={config} onDataChange={handleDataChange} />;
       case "analytics":
-        return <div className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Analytics Template</h3>
-          <p className="text-gray-600">Comprehensive analytics dashboards with KPIs</p>
-          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
+        return <AnalyticsTemplate config={config} onDataChange={handleDataChange} />;
       case "ecommerce":
-        return <div className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">E-commerce Template</h3>
-          <p className="text-gray-600">Full-featured e-commerce product displays</p>
-          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
+        return <EcommerceTemplate config={config} onDataChange={handleDataChange} />;
       case "blog":
-        return <div className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Blog Template</h3>
-          <p className="text-gray-600">Blog layouts with posts, categories, and authors</p>
-          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
+        return <BlogTemplate config={config} onDataChange={handleDataChange} />;
       case "portfolio":
-        return <div className="p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Portfolio Template</h3>
-          <p className="text-gray-600">Professional portfolios with projects and skills</p>
-          <pre className="mt-4 text-left bg-gray-100 p-4 rounded text-sm overflow-auto">
-            {JSON.stringify(config, null, 2)}
-          </pre>
-        </div>
+        return <PortfolioTemplate config={config} onDataChange={handleDataChange} />;
       default:
         return <div>Unknown template type: {config.templateType}</div>
     }

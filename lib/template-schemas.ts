@@ -5,15 +5,36 @@
 // 3. Provide type safety for template components
 
 // Base schema that all templates extend
+export type ActionTriggerType = "onClick" | "onSelect" | "onSubmit";
+export type ActionType = "MCP_TOOL_CALL" | "CUSTOM_EVENT" | "NAVIGATE" | "API_CALL"; // Added API_CALL
+
+export interface ActionSchema {
+  id: string;
+  label?: string; // Text for the button/element if this action defines it
+  trigger: ActionTriggerType;
+  type: ActionType;
+  eventName?: string; // For CUSTOM_EVENT
+  toolName?: string; // For MCP_TOOL_CALL
+  arguments?: Record<string, any>; // For MCP_TOOL_CALL (static args or placeholders)
+  apiUrl?: string; // For API_CALL
+  apiMethod?: "GET" | "POST" | "PUT" | "DELETE"; // For API_CALL
+  payload?: Record<string, any>; // For CUSTOM_EVENT, or body for POST/PUT API_CALL
+                                 // Can contain placeholders like {{item.id}} or {{form.fieldId}}
+  navigateTo?: string; // URL or path for NAVIGATE
+  confirmationMessage?: string; // Optional message for confirmation dialog
+}
+
 export interface BaseTemplateSchema {
-  templateType: string
-  title: string
-  description?: string
-  theme?: "light" | "dark" | "system"
-  primaryColor?: string
-  fullScreen?: boolean
-  closeButtonText?: string
-  actionButtonText?: string
+  templateType: string;
+  title: string;
+  description?: string;
+  theme?: "light" | "dark" | "system";
+  primaryColor?: string;
+  fullScreen?: boolean;
+  closeButtonText?: string;
+  actionButtonText?: string; // Text for the main submit/action button in footer
+  actions?: ActionSchema[]; // Actions associated with the template (e.g., footer buttons)
+  customData?: Record<string, any>; // Moved from specific schemas to Base for evaluator context
 }
 
 // Dashboard template schema
@@ -28,6 +49,7 @@ export interface DashboardSchema extends BaseTemplateSchema {
     changeType?: "increase" | "decrease" | "neutral"
     icon?: string
     color?: string
+    renderCondition?: string // Added
   }>
   charts?: Array<{
     id: string
@@ -35,6 +57,7 @@ export interface DashboardSchema extends BaseTemplateSchema {
     title: string
     data: any
     height?: number
+    renderCondition?: string // Added
   }>
   recentActivity?: Array<{
     id: string
@@ -72,33 +95,32 @@ export interface DataTableSchema extends BaseTemplateSchema {
   }>
 }
 
-// Product catalog template schema
+// Define a schema for a single field within an item (simplified for item rendering)
+export interface DynamicItemFieldSchema {
+  id: string;
+  type: "image" | "text" | "badge" | "button";
+  source: string; // Path for data, e.g., "item.name"
+  label?: string; // For button type, fallback to source if not provided
+  style?: "title" | "description" | "price" | "label" | "tag" | "button";
+  actionDefinition?: ActionSchema; // Replaces simple 'action' string for buttons
+  altSource?: string;
+  prefix?: string;
+  suffix?: string;
+  condition?: string;
+}
+
 export interface ProductCatalogSchema extends BaseTemplateSchema {
-  templateType: "productCatalog"
-  layout?: "grid" | "list"
-  products: Array<{
-    id: string
-    name: string
-    description: string
-    price: number
-    currency?: string
-    imageUrl?: string
-    rating?: number
-    badges?: string[]
-    category?: string
-    inStock?: boolean
-  }>
-  categories?: Array<{
-    id: string
-    name: string
-  }>
-  sorting?: {
-    enabled?: boolean
-    options?: Array<{
-      label: string
-      value: string
-    }>
-  }
+  templateType: "productCatalog";
+  layout?: "grid" | "list"; // Default to 'grid'
+  columns?: number; // Default to 3 for grid
+  itemDataSource: string; // e.g., "customData.products" - path to the array of product data
+  itemSchema: { // Defines how to render a single item
+    fields: DynamicItemFieldSchema[];
+    // Could also include item-level actions or styles here
+  };
+  // categories and sorting can remain as they are, operating on customData or handled by client
+  categories?: Array<{ id: string; name: string; /* other fields */ }>;
+  sorting?: { enabled?: boolean; options?: Array<{ label: string; value: string; }>; };
 }
 
 // Profile card template schema
@@ -123,13 +145,15 @@ export interface ProfileCardSchema extends BaseTemplateSchema {
     stats?: Array<{
       label: string
       value: string | number
+      renderCondition?: string // Added
     }>
   }
   actions?: Array<{
-    label: string
+    label: "string"
     action: string
     variant?: "default" | "outline" | "ghost" | "link"
     icon?: string
+    renderCondition?: string // Added
   }>
 }
 
@@ -261,6 +285,7 @@ export interface WizardSchema extends BaseTemplateSchema {
     id: string
     title: string
     description?: string
+    renderCondition?: string // Added for sections
     fields?: Array<{
       id: string
       type:
@@ -283,6 +308,13 @@ export interface WizardSchema extends BaseTemplateSchema {
         value: string
       }>
       helpText?: string
+      renderCondition?: string // Added for fields
+      validation?: { // Assuming validation structure from previous step
+        minLength?: number;
+        maxLength?: number;
+        pattern?: string;
+        message?: string;
+      };
     }>
     content?: string
   }>

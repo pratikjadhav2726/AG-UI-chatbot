@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowDownIcon, ArrowUpIcon, BarChart3, LineChart, PieChart, Activity } from "lucide-react"
+import { evaluateCondition } from "@/lib/condition-evaluator"
 
 interface DashboardTemplateProps {
   config: any
@@ -110,12 +111,12 @@ export function DashboardTemplate({ config, onDataChange }: DashboardTemplatePro
                   : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
             }`}
           >
-            {config.metrics.map(renderMetricCard)}
+            {config.metrics && config.metrics.filter((metric: any) => evaluateCondition(metric.renderCondition, config.customData)).map(renderMetricCard)}
           </div>
 
-          {config.charts && config.charts.length > 0 && (
+          {config.charts && config.charts.filter((chart: any) => evaluateCondition(chart.renderCondition, config.customData)).length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {config.charts.slice(0, 2).map(renderChartPlaceholder)}
+              {config.charts.filter((chart: any) => evaluateCondition(chart.renderCondition, config.customData)).slice(0, 2).map(renderChartPlaceholder)}
             </div>
           )}
 
@@ -131,9 +132,9 @@ export function DashboardTemplate({ config, onDataChange }: DashboardTemplatePro
           )}
         </TabsContent>
 
-        {config.charts && config.charts.length > 0 && (
+        {config.charts && config.charts.filter((chart: any) => evaluateCondition(chart.renderCondition, config.customData)).length > 0 && (
           <TabsContent value="analytics" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">{config.charts.map(renderChartPlaceholder)}</div>
+            <div className="grid grid-cols-1 gap-4">{config.charts.filter((chart: any) => evaluateCondition(chart.renderCondition, config.customData)).map(renderChartPlaceholder)}</div>
           </TabsContent>
         )}
 
