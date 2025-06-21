@@ -117,102 +117,254 @@ export class DashboardGenerator implements TemplateGenerator<"dashboard"> {
   }
 
   private generateMetrics(useCase?: string, customData?: Record<string, any>) {
-    const baseMetrics = [
-      {
-        id: "total-users",
-        label: "Total Users",
-        value: "12,458",
-        change: 12.5,
-        changeType: "increase" as const,
-        icon: "Users",
-        color: "#3b82f6"
-      },
-      {
-        id: "revenue",
-        label: "Revenue",
-        value: "$45,210",
-        change: 8.2,
-        changeType: "increase" as const,
-        icon: "DollarSign",
-        color: "#10b981"
-      },
-      {
-        id: "conversion",
-        label: "Conversion Rate",
-        value: "3.2%",
-        change: -2.1,
-        changeType: "decrease" as const,
-        icon: "TrendingUp",
-        color: "#f59e0b"
-      },
-      {
-        id: "satisfaction",
-        label: "Satisfaction",
-        value: "4.8/5",
-        change: 0.3,
-        changeType: "increase" as const,
-        icon: "Star",
-        color: "#8b5cf6"
-      },
-      {
-        id: "projectedRevenue",
-        label: "Projected Revenue (Q4)",
-        value: "$75,000",
-        icon: "TrendingUp",
-        color: "#22c55e",
-        renderCondition: "customData.showProjections === true" // Example
-      }
-    ];
+    // If custom dashboard metrics are provided, use them directly
+    if (customData?.dashboardMetrics && Array.isArray(customData.dashboardMetrics)) {
+      return customData.dashboardMetrics;
+    }
 
-    // Customize based on use case
-    if (useCase?.toLowerCase().includes("marketing")) {
+    // Gaming tournament registration form
+    if (useCase?.toLowerCase().includes('gaming') || useCase?.toLowerCase().includes('tournament')) {
       return [
-        ...baseMetrics,
         {
-          id: "ctr",
-          label: "Click-through Rate",
-          value: "2.4%",
-          change: 5.1,
+          id: "total-participants",
+          label: "Total Participants",
+          value: customData?.totalParticipants || "1,247",
+          change: customData?.participantsChange || 12.5,
           changeType: "increase" as const,
-          icon: "MousePointer",
-          color: "#ec4899"
+          icon: "users",
+          color: "blue"
+        },
+        {
+          id: "active-tournaments",
+          label: "Active Tournaments",
+          value: customData?.activeTournaments || "8",
+          change: customData?.tournamentsChange || 2,
+          changeType: "increase" as const,
+          icon: "trophy",
+          color: "green"
+        },
+        {
+          id: "prize-pool",
+          label: "Total Prize Pool",
+          value: customData?.prizePool || "$45,230",
+          change: customData?.prizePoolChange || 8.3,
+          changeType: "increase" as const,
+          icon: "dollar-sign",
+          color: "purple"
+        },
+        {
+          id: "avg-participants",
+          label: "Avg. Participants/Tournament",
+          value: customData?.avgParticipants || "156",
+          change: customData?.avgParticipantsChange || -3.2,
+          changeType: "decrease" as const,
+          icon: "bar-chart-3",
+          color: "orange"
         }
       ];
     }
 
-    return baseMetrics;
+    // E-commerce dashboard
+    if (useCase?.toLowerCase().includes('ecommerce') || useCase?.toLowerCase().includes('shop')) {
+      return [
+        {
+          id: "total-revenue",
+          label: "Total Revenue",
+          value: customData?.totalRevenue || "$124,563",
+          change: customData?.revenueChange || 23.5,
+          changeType: "increase" as const,
+          icon: "dollar-sign",
+          color: "green"
+        },
+        {
+          id: "orders",
+          label: "Orders",
+          value: customData?.orders || "1,847",
+          change: customData?.ordersChange || 12.3,
+          changeType: "increase" as const,
+          icon: "shopping-cart",
+          color: "blue"
+        },
+        {
+          id: "conversion-rate",
+          label: "Conversion Rate",
+          value: customData?.conversionRate ? `${(customData.conversionRate * 100).toFixed(1)}%` : "3.2%",
+          change: customData?.conversionRateChange || 0.8,
+          changeType: "increase" as const,
+          icon: "trending-up",
+          color: "purple"
+        },
+        {
+          id: "avg-order-value",
+          label: "Avg. Order Value",
+          value: customData?.avgOrderValue || "$67.45",
+          change: customData?.avgOrderValueChange || 5.2,
+          changeType: "increase" as const,
+          icon: "bar-chart-3",
+          color: "orange"
+        }
+      ];
+    }
+
+    // Default business metrics
+    return [
+      {
+        id: "total-revenue",
+        label: "Total Revenue",
+        value: customData?.totalRevenue || "$124,563",
+        change: customData?.revenueChange || 23.5,
+        changeType: "increase" as const,
+        icon: "dollar-sign",
+        color: "green"
+      },
+      {
+        id: "orders",
+        label: "Orders",
+        value: customData?.orders || "1,847",
+        change: customData?.ordersChange || 12.3,
+        changeType: "increase" as const,
+        icon: "shopping-cart",
+        color: "blue"
+      },
+      {
+        id: "conversion-rate",
+        label: "Conversion Rate",
+        value: customData?.conversionRate ? `${(customData.conversionRate * 100).toFixed(1)}%` : "3.2%",
+        change: customData?.conversionRateChange || 0.8,
+        changeType: "increase" as const,
+        icon: "trending-up",
+        color: "purple"
+      },
+      {
+        id: "avg-order-value",
+        label: "Avg. Order Value",
+        value: customData?.avgOrderValue || "$67.45",
+        change: customData?.avgOrderValueChange || 5.2,
+        changeType: "increase" as const,
+        icon: "bar-chart-3",
+        color: "orange"
+      }
+    ];
   }
 
   private generateCharts(useCase?: string, customData?: Record<string, any>) {
+    // If custom dashboard charts are provided, use them directly
+    if (customData?.dashboardCharts && Array.isArray(customData.dashboardCharts)) {
+      return customData.dashboardCharts;
+    }
+
+    // Gaming tournament charts
+    if (useCase?.toLowerCase().includes('gaming') || useCase?.toLowerCase().includes('tournament')) {
+      return [
+        {
+          id: "participant-growth",
+          type: "line" as const,
+          title: "Participant Growth",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              {
+                label: "Participants",
+                data: [650, 720, 890, 1020, 1180, 1247],
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.1)"
+              }
+            ]
+          },
+          insights: ["Steady growth trend", "Peak during summer months", "20% increase from last year"]
+        },
+        {
+          id: "tournament-distribution",
+          type: "pie" as const,
+          title: "Tournament Types",
+          data: {
+            labels: ["FPS", "MOBA", "Strategy", "Sports", "Fighting"],
+            datasets: [
+              {
+                label: "Participants",
+                data: [35, 25, 20, 15, 5],
+                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+              }
+            ]
+          },
+          insights: ["FPS games dominate", "Strategy games growing", "Fighting games niche"]
+        }
+      ];
+    }
+
+    // E-commerce charts
+    if (useCase?.toLowerCase().includes('ecommerce') || useCase?.toLowerCase().includes('shop')) {
+      return [
+        {
+          id: "revenue-trend",
+          type: "line" as const,
+          title: "Revenue Trend",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              {
+                label: "Revenue",
+                data: [85000, 92000, 105000, 98000, 112000, 124563],
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)"
+              }
+            ]
+          },
+          insights: ["Consistent growth trend", "Seasonal variations", "23% YoY increase"]
+        },
+        {
+          id: "category-sales",
+          type: "bar" as const,
+          title: "Sales by Category",
+          data: {
+            labels: ["Electronics", "Clothing", "Home", "Books", "Sports"],
+            datasets: [
+              {
+                label: "Sales",
+                data: [45000, 32000, 28000, 12000, 7563],
+                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+              }
+            ]
+          },
+          insights: ["Electronics lead sales", "Clothing strong performer", "Books need attention"]
+        }
+      ];
+    }
+
+    // Default business charts
     return [
       {
-        id: "revenue-chart",
+        id: "revenue-trend",
         type: "line" as const,
         title: "Revenue Trend",
         data: {
           labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-          datasets: [{
-            label: "Revenue",
-            data: [30000, 35000, 42000, 38000, 45000, 48000],
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59, 130, 246, 0.1)"
-          }]
+          datasets: [
+            {
+              label: "Revenue",
+              data: [85000, 92000, 105000, 98000, 112000, 124563],
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16, 185, 129, 0.1)"
+            }
+          ]
         },
-        height: 300
+        insights: ["Consistent growth trend", "Seasonal variations", "23% YoY increase"]
       },
       {
-        id: "user-growth",
+        id: "category-sales",
         type: "bar" as const,
-        title: "User Growth",
+        title: "Sales by Category",
         data: {
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-          datasets: [{
-            label: "New Users",
-            data: [120, 190, 300, 500],
-            backgroundColor: "#10b981"
-          }]
+          labels: ["Electronics", "Clothing", "Home", "Books", "Sports"],
+          datasets: [
+            {
+              label: "Sales",
+              data: [45000, 32000, 28000, 12000, 7563],
+              backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+            }
+          ]
         },
-        height: 250
+        insights: ["Electronics lead sales", "Clothing strong performer", "Books need attention"]
       }
     ];
   }
@@ -302,9 +454,9 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
   }): Promise<TemplateConfig<"dataTable">> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen } = params;
 
-    const defaultColumns = this.generateColumns(useCase);
-    const defaultData = this.generateData(defaultColumns, useCase);
-    const defaultFilters = this.generateFilters(useCase);
+    const defaultColumns = this.generateColumns(useCase, customConfig?.customData);
+    const defaultData = this.generateData(useCase, customConfig?.customData);
+    const defaultFilters = this.generateFilters(useCase, customConfig?.customData);
 
     return {
       templateType: "dataTable",
@@ -326,91 +478,486 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
     };
   }
 
-  private generateColumns(useCase?: string) {
-    if (useCase?.toLowerCase().includes("user")) {
+  private generateColumns(useCase?: string, customData?: Record<string, any>) {
+    // If custom data table columns are provided, use them directly
+    if (customData?.dataTableColumns && Array.isArray(customData.dataTableColumns)) {
+      return customData.dataTableColumns;
+    }
+
+    // Customer data table
+    if (useCase?.toLowerCase().includes('customer') || useCase?.toLowerCase().includes('user')) {
       return [
-        { id: "id", header: "ID", accessorKey: "id", enableSorting: true },
-        { id: "name", header: "Name", accessorKey: "name", enableSorting: true },
-        { id: "email", header: "Email", accessorKey: "email", enableSorting: true },
-        { 
-          id: "status", 
-          header: "Status", 
-          accessorKey: "status", 
-          enableSorting: true,
-          cell: { type: "badge", options: { variant: "outline" } }
+        {
+          id: "name",
+          header: "Name",
+          accessorKey: "name",
+          enableSorting: true
         },
-        { id: "created", header: "Created", accessorKey: "createdAt", enableSorting: true },
-        { 
-          id: "actions", 
-          header: "Actions", 
+        {
+          id: "email",
+          header: "Email",
+          accessorKey: "email",
+          enableSorting: true
+        },
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          enableSorting: true,
+          cell: {
+            type: "badge",
+            options: {
+              variants: {
+                active: "default",
+                inactive: "secondary",
+                pending: "outline"
+              }
+            }
+          }
+        },
+        {
+          id: "lastPurchase",
+          header: "Last Purchase",
+          accessorKey: "lastPurchase",
+          enableSorting: true
+        },
+        {
+          id: "totalSpent",
+          header: "Total Spent",
+          accessorKey: "totalSpent",
+          enableSorting: true
+        },
+        {
+          id: "actions",
+          header: "Actions",
           accessorKey: "actions",
           enableSorting: false,
-          cell: { type: "actions", options: { actions: ["edit", "delete"] } }
+          cell: {
+            type: "actions"
+          }
         }
       ];
     }
 
-    // Default columns
+    // Product inventory table
+    if (useCase?.toLowerCase().includes('product') || useCase?.toLowerCase().includes('inventory')) {
+      return [
+        {
+          id: "productName",
+          header: "Product Name",
+          accessorKey: "productName",
+          enableSorting: true
+        },
+        {
+          id: "category",
+          header: "Category",
+          accessorKey: "category",
+          enableSorting: true
+        },
+        {
+          id: "stock",
+          header: "Stock",
+          accessorKey: "stock",
+          enableSorting: true
+        },
+        {
+          id: "price",
+          header: "Price",
+          accessorKey: "price",
+          enableSorting: true
+        },
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          enableSorting: true,
+          cell: {
+            type: "badge",
+            options: {
+              variants: {
+                in_stock: "default",
+                low_stock: "outline",
+                out_of_stock: "destructive"
+              }
+            }
+          }
+        },
+        {
+          id: "actions",
+          header: "Actions",
+          accessorKey: "actions",
+          enableSorting: false,
+          cell: {
+            type: "actions"
+          }
+        }
+      ];
+    }
+
+    // Order management table
+    if (useCase?.toLowerCase().includes('order') || useCase?.toLowerCase().includes('sales')) {
+      return [
+        {
+          id: "orderId",
+          header: "Order ID",
+          accessorKey: "orderId",
+          enableSorting: true
+        },
+        {
+          id: "customer",
+          header: "Customer",
+          accessorKey: "customer",
+          enableSorting: true
+        },
+        {
+          id: "items",
+          header: "Items",
+          accessorKey: "items",
+          enableSorting: true
+        },
+        {
+          id: "total",
+          header: "Total",
+          accessorKey: "total",
+          enableSorting: true
+        },
+        {
+          id: "status",
+          header: "Status",
+          accessorKey: "status",
+          enableSorting: true,
+          cell: {
+            type: "badge",
+            options: {
+              variants: {
+                completed: "default",
+                processing: "outline",
+                cancelled: "destructive",
+                pending: "secondary"
+              }
+            }
+          }
+        },
+        {
+          id: "date",
+          header: "Date",
+          accessorKey: "date",
+          enableSorting: true
+        },
+        {
+          id: "actions",
+          header: "Actions",
+          accessorKey: "actions",
+          enableSorting: false,
+          cell: {
+            type: "actions"
+          }
+        }
+      ];
+    }
+
+    // Default table columns
     return [
-      { id: "id", header: "ID", accessorKey: "id", enableSorting: true },
-      { id: "name", header: "Name", accessorKey: "name", enableSorting: true },
-      { id: "category", header: "Category", accessorKey: "category", enableSorting: true },
-      { 
-        id: "status", 
-        header: "Status", 
+      {
+        id: "name",
+        header: "Name",
+        accessorKey: "name",
+        enableSorting: true
+      },
+      {
+        id: "email",
+        header: "Email",
+        accessorKey: "email",
+        enableSorting: true
+      },
+      {
+        id: "status",
+        header: "Status",
         accessorKey: "status",
         enableSorting: true,
-        cell: { type: "badge" }
+        cell: {
+          type: "badge",
+          options: {
+            variants: {
+              active: "default",
+              inactive: "secondary",
+              pending: "outline"
+            }
+          }
+        }
       },
-      { id: "updated", header: "Last Updated", accessorKey: "updatedAt", enableSorting: true }
+      {
+        id: "lastUpdated",
+        header: "Last Updated",
+        accessorKey: "lastUpdated",
+        enableSorting: true
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        accessorKey: "actions",
+        enableSorting: false,
+        cell: {
+          type: "actions"
+        }
+      }
     ];
   }
 
-  private generateData(columns: any[], useCase?: string) {
-    const rowCount = 25;
-    const data = [];
-
-    for (let i = 1; i <= rowCount; i++) {
-      const row: any = {};
-      
-      columns.forEach(col => {
-        switch (col.accessorKey) {
-          case "id":
-            row.id = i;
-            break;
-          case "name":
-            row.name = `Item ${i}`;
-            break;
-          case "email":
-            row.email = `user${i}@example.com`;
-            break;
-          case "category":
-            row.category = ["Electronics", "Clothing", "Books", "Home"][i % 4];
-            break;
-          case "status":
-            row.status = ["Active", "Inactive", "Pending"][i % 3];
-            break;
-          case "createdAt":
-          case "updatedAt":
-            row[col.accessorKey] = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            break;
-        }
-      });
-
-      data.push(row);
+  private generateData(useCase?: string, customData?: Record<string, any>) {
+    // If custom data table data is provided, use it directly
+    if (customData?.dataTableData && Array.isArray(customData.dataTableData)) {
+      return customData.dataTableData;
     }
 
-    return data;
+    // Customer data
+    if (useCase?.toLowerCase().includes('customer') || useCase?.toLowerCase().includes('user')) {
+      return [
+        {
+          id: "1",
+          name: "John Doe",
+          email: "john.doe@example.com",
+          status: "active",
+          lastPurchase: "2024-01-15",
+          totalSpent: "$1,250"
+        },
+        {
+          id: "2",
+          name: "Jane Smith",
+          email: "jane.smith@example.com",
+          status: "active",
+          lastPurchase: "2024-01-10",
+          totalSpent: "$890"
+        },
+        {
+          id: "3",
+          name: "Bob Johnson",
+          email: "bob.johnson@example.com",
+          status: "inactive",
+          lastPurchase: "2023-12-20",
+          totalSpent: "$450"
+        },
+        {
+          id: "4",
+          name: "Alice Brown",
+          email: "alice.brown@example.com",
+          status: "pending",
+          lastPurchase: "2024-01-05",
+          totalSpent: "$320"
+        }
+      ];
+    }
+
+    // Product inventory data
+    if (useCase?.toLowerCase().includes('product') || useCase?.toLowerCase().includes('inventory')) {
+      return [
+        {
+          id: "1",
+          productName: "Wireless Headphones",
+          category: "Electronics",
+          stock: 45,
+          price: "$89.99",
+          status: "in_stock"
+        },
+        {
+          id: "2",
+          productName: "Smart Watch",
+          category: "Electronics",
+          stock: 12,
+          price: "$199.99",
+          status: "low_stock"
+        },
+        {
+          id: "3",
+          productName: "Running Shoes",
+          category: "Sports",
+          stock: 0,
+          price: "$129.99",
+          status: "out_of_stock"
+        },
+        {
+          id: "4",
+          productName: "Coffee Maker",
+          category: "Home",
+          stock: 23,
+          price: "$79.99",
+          status: "in_stock"
+        }
+      ];
+    }
+
+    // Order management data
+    if (useCase?.toLowerCase().includes('order') || useCase?.toLowerCase().includes('sales')) {
+      return [
+        {
+          id: "1",
+          orderId: "ORD-001",
+          customer: "John Doe",
+          items: 3,
+          total: "$299.97",
+          status: "completed",
+          date: "2024-01-15"
+        },
+        {
+          id: "2",
+          orderId: "ORD-002",
+          customer: "Jane Smith",
+          items: 1,
+          total: "$89.99",
+          status: "processing",
+          date: "2024-01-14"
+        },
+        {
+          id: "3",
+          orderId: "ORD-003",
+          customer: "Bob Johnson",
+          items: 2,
+          total: "$159.98",
+          status: "pending",
+          date: "2024-01-13"
+        },
+        {
+          id: "4",
+          orderId: "ORD-004",
+          customer: "Alice Brown",
+          items: 5,
+          total: "$449.95",
+          status: "cancelled",
+          date: "2024-01-12"
+        }
+      ];
+    }
+
+    // Default data
+    return [
+      {
+        id: "1",
+        name: "John Doe",
+        email: "john.doe@example.com",
+        status: "active",
+        lastUpdated: "2024-01-15"
+      },
+      {
+        id: "2",
+        name: "Jane Smith",
+        email: "jane.smith@example.com",
+        status: "active",
+        lastUpdated: "2024-01-14"
+      },
+      {
+        id: "3",
+        name: "Bob Johnson",
+        email: "bob.johnson@example.com",
+        status: "inactive",
+        lastUpdated: "2024-01-13"
+      },
+      {
+        id: "4",
+        name: "Alice Brown",
+        email: "alice.brown@example.com",
+        status: "pending",
+        lastUpdated: "2024-01-12"
+      }
+    ];
   }
 
-  private generateFilters(useCase?: string) {
+  private generateFilters(useCase?: string, customData?: Record<string, any>) {
+    // If custom data table filters are provided, use them directly
+    if (customData?.dataTableFilters && Array.isArray(customData.dataTableFilters)) {
+      return customData.dataTableFilters;
+    }
+
+    // Customer filters
+    if (useCase?.toLowerCase().includes('customer') || useCase?.toLowerCase().includes('user')) {
+      return [
+        {
+          id: "status",
+          label: "Status",
+          type: "select",
+          options: [
+            { label: "All", value: "" },
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+            { label: "Pending", value: "pending" }
+          ]
+        },
+        {
+          id: "search",
+          label: "Search",
+          type: "text"
+        }
+      ];
+    }
+
+    // Product inventory filters
+    if (useCase?.toLowerCase().includes('product') || useCase?.toLowerCase().includes('inventory')) {
+      return [
+        {
+          id: "category",
+          label: "Category",
+          type: "select",
+          options: [
+            { label: "All", value: "" },
+            { label: "Electronics", value: "Electronics" },
+            { label: "Sports", value: "Sports" },
+            { label: "Home", value: "Home" }
+          ]
+        },
+        {
+          id: "status",
+          label: "Stock Status",
+          type: "select",
+          options: [
+            { label: "All", value: "" },
+            { label: "In Stock", value: "in_stock" },
+            { label: "Low Stock", value: "low_stock" },
+            { label: "Out of Stock", value: "out_of_stock" }
+          ]
+        },
+        {
+          id: "search",
+          label: "Search Products",
+          type: "text"
+        }
+      ];
+    }
+
+    // Order management filters
+    if (useCase?.toLowerCase().includes('order') || useCase?.toLowerCase().includes('sales')) {
+      return [
+        {
+          id: "status",
+          label: "Order Status",
+          type: "select",
+          options: [
+            { label: "All", value: "" },
+            { label: "Completed", value: "completed" },
+            { label: "Processing", value: "processing" },
+            { label: "Pending", value: "pending" },
+            { label: "Cancelled", value: "cancelled" }
+          ]
+        },
+        {
+          id: "dateRange",
+          label: "Date Range",
+          type: "date"
+        },
+        {
+          id: "search",
+          label: "Search Orders",
+          type: "text"
+        }
+      ];
+    }
+
+    // Default filters
     return [
       {
         id: "status",
         label: "Status",
-        type: "select" as const,
+        type: "select",
         options: [
-          { label: "All", value: "all" },
+          { label: "All", value: "" },
           { label: "Active", value: "active" },
           { label: "Inactive", value: "inactive" },
           { label: "Pending", value: "pending" }
@@ -419,12 +966,7 @@ export class DataTableGenerator implements TemplateGenerator<"dataTable"> {
       {
         id: "search",
         label: "Search",
-        type: "text" as const
-      },
-      {
-        id: "date",
-        label: "Date Range",
-        type: "date" as const
+        type: "text"
       }
     ];
   }
@@ -1026,13 +1568,17 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
   }): Promise<TemplateConfig<"analytics">> {
     const { title, description, useCase, customConfig, theme, primaryColor, fullScreen } = params;
 
+    const kpis = this.generateKPIs(useCase, customConfig?.customData);
+    const charts = this.generateCharts(useCase, customConfig?.customData);
+    const segments = this.generateSegments(useCase, customConfig?.customData);
+
     return {
       templateType: "analytics",
-      title,
-      description: description || `${title} - Comprehensive analytics and insights`,
+      title: title || "Analytics Dashboard",
+      description: description || "Comprehensive analytics dashboard with KPIs, charts, and audience insights",
       theme: theme || "system",
-      primaryColor,
-      fullScreen: fullScreen || true, // Analytics often work better full screen
+      primaryColor: primaryColor || "#3b82f6",
+      fullScreen: fullScreen || false,
       closeButtonText: "Close",
       timeRange: {
         start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -1044,123 +1590,515 @@ export class AnalyticsGenerator implements TemplateGenerator<"analytics"> {
           { label: "Last 12 months", value: "12m" }
         ]
       },
-      kpis: this.generateKPIs(useCase),
-      charts: this.generateCharts(useCase),
-      segments: this.generateSegments(useCase),
+      kpis: kpis,
+      charts: charts,
+      segments: segments,
       goals: this.generateGoals(useCase),
       actionButtonText: "Generate Report"
     };
   }
 
-  private generateKPIs(useCase?: string) {
+  private generateKPIs(useCase?: string, customData?: Record<string, any>) {
+    // If custom analytics KPIs are provided, use them directly
+    if (customData?.analyticsKPIs && Array.isArray(customData.analyticsKPIs)) {
+      return customData.analyticsKPIs;
+    }
+
+    // Website analytics KPIs
+    if (useCase?.toLowerCase().includes('website') || useCase?.toLowerCase().includes('web')) {
+      return [
+        {
+          id: "pageViews",
+          label: "Page Views",
+          value: "124,563",
+          change: 23.5,
+          changeType: "increase" as const,
+          target: "150,000",
+          format: "number",
+          icon: "eye"
+        },
+        {
+          id: "uniqueVisitors",
+          label: "Unique Visitors",
+          value: "45,230",
+          change: 18.2,
+          changeType: "increase" as const,
+          target: "50,000",
+          format: "number",
+          icon: "users"
+        },
+        {
+          id: "bounceRate",
+          label: "Bounce Rate",
+          value: "32.5%",
+          change: -5.2,
+          changeType: "decrease" as const,
+          target: "25%",
+          format: "percentage",
+          icon: "trending-down"
+        },
+        {
+          id: "conversionRate",
+          label: "Conversion Rate",
+          value: "3.2%",
+          change: 0.8,
+          changeType: "increase" as const,
+          target: "4%",
+          format: "percentage",
+          icon: "target"
+        }
+      ];
+    }
+
+    // E-commerce analytics KPIs
+    if (useCase?.toLowerCase().includes('ecommerce') || useCase?.toLowerCase().includes('shop')) {
+      return [
+        {
+          id: "revenue",
+          label: "Revenue",
+          value: "$124,563",
+          change: 23.5,
+          changeType: "increase" as const,
+          target: "$150,000",
+          format: "currency",
+          icon: "dollar-sign"
+        },
+        {
+          id: "orders",
+          label: "Orders",
+          value: "1,847",
+          change: 12.3,
+          changeType: "increase" as const,
+          target: "2,000",
+          format: "number",
+          icon: "shopping-cart"
+        },
+        {
+          id: "averageOrderValue",
+          label: "Average Order Value",
+          value: "$67.45",
+          change: 5.2,
+          changeType: "increase" as const,
+          target: "$75",
+          format: "currency",
+          icon: "bar-chart-3"
+        },
+        {
+          id: "customerLifetimeValue",
+          label: "Customer Lifetime Value",
+          value: "$450",
+          change: 8.7,
+          changeType: "increase" as const,
+          target: "$500",
+          format: "currency",
+          icon: "user-check"
+        }
+      ];
+    }
+
+    // Social media analytics KPIs
+    if (useCase?.toLowerCase().includes('social') || useCase?.toLowerCase().includes('media')) {
+      return [
+        {
+          id: "followers",
+          label: "Followers",
+          value: "45,230",
+          change: 12.5,
+          changeType: "increase" as const,
+          target: "50,000",
+          format: "number",
+          icon: "users"
+        },
+        {
+          id: "engagementRate",
+          label: "Engagement Rate",
+          value: "4.2%",
+          change: 0.8,
+          changeType: "increase" as const,
+          target: "5%",
+          format: "percentage",
+          icon: "heart"
+        },
+        {
+          id: "reach",
+          label: "Reach",
+          value: "125,430",
+          change: 18.3,
+          changeType: "increase" as const,
+          target: "150,000",
+          format: "number",
+          icon: "eye"
+        },
+        {
+          id: "impressions",
+          label: "Impressions",
+          value: "234,567",
+          change: 15.7,
+          changeType: "increase" as const,
+          target: "250,000",
+          format: "number",
+          icon: "trending-up"
+        }
+      ];
+    }
+
+    // Default analytics KPIs
     return [
-      {
-        id: "visitors",
-        label: "Total Visitors",
-        value: "284,392",
-        change: 12.5,
-        changeType: "increase" as const,
-        target: 300000,
-        format: "number" as const,
-        icon: "Users"
-      },
-      {
-        id: "conversion",
-        label: "Conversion Rate",
-        value: 3.24,
-        change: -0.8,
-        changeType: "decrease" as const,
-        target: 4.0,
-        format: "percentage" as const,
-        icon: "TrendingUp"
-      },
       {
         id: "revenue",
         label: "Revenue",
-        value: 89420,
-        change: 15.2,
+        value: "$124,563",
+        change: 23.5,
         changeType: "increase" as const,
-        target: 100000,
-        format: "currency" as const,
-        icon: "DollarSign"
+        target: "$150,000",
+        format: "currency",
+        icon: "dollar-sign"
       },
       {
-        id: "engagement",
-        label: "Avg. Session Duration",
-        value: "4m 32s",
-        change: 8.1,
+        id: "orders",
+        label: "Orders",
+        value: "1,847",
+        change: 12.3,
         changeType: "increase" as const,
-        format: "duration" as const,
-        icon: "Clock"
+        target: "2,000",
+        format: "number",
+        icon: "shopping-cart"
+      },
+      {
+        id: "conversionRate",
+        label: "Conversion Rate",
+        value: "3.2%",
+        change: 0.8,
+        changeType: "increase" as const,
+        target: "4%",
+        format: "percentage",
+        icon: "target"
+      },
+      {
+        id: "averageOrderValue",
+        label: "Average Order Value",
+        value: "$67.45",
+        change: 5.2,
+        changeType: "increase" as const,
+        target: "$75",
+        format: "currency",
+        icon: "bar-chart-3"
       }
     ];
   }
 
-  private generateCharts(useCase?: string) {
+  private generateCharts(useCase?: string, customData?: Record<string, any>) {
+    // If custom analytics charts are provided, use them directly
+    if (customData?.analyticsCharts && Array.isArray(customData.analyticsCharts)) {
+      return customData.analyticsCharts;
+    }
+
+    // Website analytics charts
+    if (useCase?.toLowerCase().includes('website') || useCase?.toLowerCase().includes('web')) {
+      return [
+        {
+          id: "trafficTrend",
+          title: "Traffic Trend",
+          type: "line" as const,
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              {
+                label: "Page Views",
+                data: [85000, 92000, 105000, 98000, 112000, 124563],
+                borderColor: "#3b82f6",
+                backgroundColor: "rgba(59, 130, 246, 0.1)"
+              },
+              {
+                label: "Unique Visitors",
+                data: [32000, 35000, 42000, 38000, 43000, 45230],
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)"
+              }
+            ]
+          },
+          insights: ["Steady growth in traffic", "Peak during March", "Mobile traffic increasing"],
+          height: 300
+        },
+        {
+          id: "trafficSources",
+          title: "Traffic Sources",
+          type: "doughnut" as const,
+          data: {
+            labels: ["Organic Search", "Direct", "Social Media", "Referral", "Email"],
+            datasets: [
+              {
+                label: "Traffic",
+                data: [45, 25, 15, 10, 5],
+                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+              }
+            ]
+          },
+          insights: ["Organic search dominates", "Social media growing", "Email needs improvement"],
+          height: 250
+        }
+      ];
+    }
+
+    // E-commerce analytics charts
+    if (useCase?.toLowerCase().includes('ecommerce') || useCase?.toLowerCase().includes('shop')) {
+      return [
+        {
+          id: "revenueTrend",
+          title: "Revenue Trend",
+          type: "line" as const,
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              {
+                label: "Revenue",
+                data: [85000, 92000, 105000, 98000, 112000, 124563],
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)"
+              }
+            ]
+          },
+          insights: ["Consistent growth trend", "Seasonal variations", "23% YoY increase"],
+          height: 300
+        },
+        {
+          id: "conversionFunnel",
+          title: "Conversion Funnel",
+          type: "funnel" as const,
+          data: {
+            labels: ["Visitors", "Add to Cart", "Checkout", "Purchase"],
+            datasets: [
+              {
+                label: "Conversion",
+                data: [100, 45, 23, 18],
+                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"]
+              }
+            ]
+          },
+          insights: ["45% add to cart rate", "51% checkout completion", "78% purchase rate"],
+          height: 250
+        }
+      ];
+    }
+
+    // Social media analytics charts
+    if (useCase?.toLowerCase().includes('social') || useCase?.toLowerCase().includes('media')) {
+      return [
+        {
+          id: "followerGrowth",
+          title: "Follower Growth",
+          type: "line" as const,
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              {
+                label: "Followers",
+                data: [35000, 38000, 42000, 43000, 44000, 45230],
+                borderColor: "#8b5cf6",
+                backgroundColor: "rgba(139, 92, 246, 0.1)"
+              }
+            ]
+          },
+          insights: ["Steady follower growth", "Engagement driving growth", "Viral content spikes"],
+          height: 300
+        },
+        {
+          id: "engagementByPlatform",
+          title: "Engagement by Platform",
+          type: "bar" as const,
+          data: {
+            labels: ["Instagram", "Twitter", "Facebook", "LinkedIn", "TikTok"],
+            datasets: [
+              {
+                label: "Engagement Rate",
+                data: [5.2, 3.8, 2.1, 4.5, 6.8],
+                backgroundColor: ["#e4405f", "#1da1f2", "#1877f2", "#0077b5", "#000000"]
+              }
+            ]
+          },
+          insights: ["TikTok highest engagement", "Instagram strong performer", "Facebook declining"],
+          height: 250
+        }
+      ];
+    }
+
+    // Default analytics charts
     return [
       {
-        id: "traffic-trend",
-        title: "Traffic Trend",
+        id: "revenueTrend",
+        title: "Revenue Trend",
         type: "line" as const,
         data: {
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-          datasets: [{
-            label: "Visitors",
-            data: [65000, 70000, 68000, 75000],
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59, 130, 246, 0.1)"
-          }]
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          datasets: [
+            {
+              label: "Revenue",
+              data: [85000, 92000, 105000, 98000, 112000, 124563],
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16, 185, 129, 0.1)"
+            }
+          ]
         },
-        insights: [
-          "Traffic increased by 15% compared to last month",
-          "Peak traffic occurs on weekdays between 10-11 AM",
-          "Mobile traffic accounts for 68% of total visitors"
-        ],
-        height: 350
+        insights: ["Consistent growth trend", "Seasonal variations", "23% YoY increase"],
+        height: 300
       },
       {
-        id: "conversion-funnel",
-        title: "Conversion Funnel",
-        type: "funnel" as const,
+        id: "categoryPerformance",
+        title: "Category Performance",
+        type: "bar" as const,
         data: {
-          labels: ["Visitors", "Product Views", "Cart Adds", "Purchases"],
-          datasets: [{
-            data: [100000, 45000, 12000, 3240],
-            backgroundColor: ["#3b82f6", "#06b6d4", "#10b981", "#f59e0b"]
-          }]
+          labels: ["Electronics", "Clothing", "Home", "Books", "Sports"],
+          datasets: [
+            {
+              label: "Sales",
+              data: [45000, 32000, 28000, 12000, 7563],
+              backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+            }
+          ]
         },
-        insights: [
-          "45% of visitors view products",
-          "Cart abandonment rate is 73%",
-          "Checkout completion rate is 27%"
-        ],
-        height: 300
+        insights: ["Electronics lead sales", "Clothing strong performer", "Books need attention"],
+        height: 250
       }
     ];
   }
 
-  private generateSegments(useCase?: string) {
+  private generateSegments(useCase?: string, customData?: Record<string, any>) {
+    // If custom analytics segments are provided, use them directly
+    if (customData?.analyticsSegments && Array.isArray(customData.analyticsSegments)) {
+      return customData.analyticsSegments;
+    }
+
+    // Website analytics segments
+    if (useCase?.toLowerCase().includes('website') || useCase?.toLowerCase().includes('web')) {
+      return [
+        {
+          id: "organic-search",
+          name: "Organic Search",
+          criteria: "Traffic from search engines",
+          size: 56000,
+          growth: 15.2
+        },
+        {
+          id: "direct-traffic",
+          name: "Direct Traffic",
+          criteria: "Direct visits and bookmarks",
+          size: 31000,
+          growth: 8.5
+        },
+        {
+          id: "social-media",
+          name: "Social Media",
+          criteria: "Traffic from social platforms",
+          size: 18700,
+          growth: 23.1
+        },
+        {
+          id: "referral",
+          name: "Referral",
+          criteria: "Traffic from other websites",
+          size: 12400,
+          growth: 5.8
+        }
+      ];
+    }
+
+    // E-commerce analytics segments
+    if (useCase?.toLowerCase().includes('ecommerce') || useCase?.toLowerCase().includes('shop')) {
+      return [
+        {
+          id: "new-customers",
+          name: "New Customers",
+          criteria: "First-time purchasers",
+          size: 1250,
+          growth: 18.5
+        },
+        {
+          id: "returning-customers",
+          name: "Returning Customers",
+          criteria: "Repeat purchasers",
+          size: 597,
+          growth: 12.3
+        },
+        {
+          id: "high-value",
+          name: "High-Value Customers",
+          criteria: "Spent >$500 in last 6 months",
+          size: 234,
+          growth: 25.7
+        },
+        {
+          id: "at-risk",
+          name: "At-Risk Customers",
+          criteria: "No purchase in last 90 days",
+          size: 456,
+          growth: -8.2
+        }
+      ];
+    }
+
+    // Social media analytics segments
+    if (useCase?.toLowerCase().includes('social') || useCase?.toLowerCase().includes('media')) {
+      return [
+        {
+          id: "engaged-followers",
+          name: "Engaged Followers",
+          criteria: "Interacted in last 30 days",
+          size: 18500,
+          growth: 22.1
+        },
+        {
+          id: "inactive-followers",
+          name: "Inactive Followers",
+          criteria: "No interaction in last 90 days",
+          size: 26730,
+          growth: -5.3
+        },
+        {
+          id: "brand-advocates",
+          name: "Brand Advocates",
+          criteria: "Shared content in last 30 days",
+          size: 3200,
+          growth: 35.8
+        },
+        {
+          id: "new-followers",
+          name: "New Followers",
+          criteria: "Followed in last 30 days",
+          size: 5800,
+          growth: 18.9
+        }
+      ];
+    }
+
+    // Default analytics segments
     return [
+      {
+        id: "active-users",
+        name: "Active Users",
+        criteria: "Users with activity in last 30 days",
+        size: 45000,
+        growth: 15.2
+      },
+      {
+        id: "premium-users",
+        name: "Premium Users",
+        criteria: "Users with premium subscriptions",
+        size: 8500,
+        growth: 25.7
+      },
       {
         id: "new-users",
         name: "New Users",
-        criteria: "First visit within 30 days",
-        size: 45230,
-        growth: 8.2
+        criteria: "Users registered in last 30 days",
+        size: 12000,
+        growth: 18.9
       },
       {
-        id: "returning-users",
-        name: "Returning Users",
-        criteria: "Multiple visits in 30 days",
-        size: 189340,
-        growth: 12.1
-      },
-      {
-        id: "power-users",
-        name: "Power Users",
-        criteria: "5+ sessions per week",
-        size: 23890,
-        growth: 15.6
+        id: "churned-users",
+        name: "Churned Users",
+        criteria: "Users inactive for 90+ days",
+        size: 8500,
+        growth: -8.2
       }
     ];
   }

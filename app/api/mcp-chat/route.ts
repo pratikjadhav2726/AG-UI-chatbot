@@ -40,78 +40,21 @@ const mcpUITool = tool({
     theme: z.enum(["light", "dark", "system"]).optional().default("system").describe("Color theme"),
     primaryColor: z.string().optional().describe("Primary color (hex code)"),
     fullScreen: z.boolean().optional().default(false).describe("Whether to display in full screen"),
-    // Enhanced dynamic content parameters
-    customData: z.record(z.any()).optional().describe("Custom data object with any additional configuration like metrics, product info, etc."),
-    images: z.array(z.object({
-      id: z.string(),
-      url: z.string(),
-      alt: z.string().optional(),
-      caption: z.string().optional(),
-      category: z.string().optional().describe("Category like 'product', 'hero', 'gallery', etc.")
-    })).optional().describe("Array of images to use in the template"),
-    textContent: z.record(z.string()).optional().describe("Custom text content for different sections"),
-    brandingConfig: z.object({
-      logoUrl: z.string().optional(),
-      brandName: z.string().optional(),
-      brandColors: z.array(z.string()).optional(),
-      fontFamily: z.string().optional()
-    }).optional().describe("Branding configuration for the template"),
-    // Form-specific parameters for dynamic field generation
-    formFields: z.array(z.object({
-      id: z.string().describe("Unique identifier for the field"),
-      type: z.enum(["text", "email", "password", "number", "phone", "textarea", "select", "checkbox", "radio", "date", "time", "file", "url"]).describe("Type of form field"),
-      label: z.string().describe("Display label for the field"),
-      placeholder: z.string().optional().describe("Placeholder text for the field"),
-      required: z.boolean().optional().default(false).describe("Whether the field is required"),
-      validation: z.object({
-        minLength: z.number().optional().describe("Minimum length for text fields"),
-        maxLength: z.number().optional().describe("Maximum length for text fields"),
-        pattern: z.string().optional().describe("Regex pattern for validation"),
-        message: z.string().optional().describe("Custom validation error message")
-      }).optional().describe("Validation rules for the field"),
-      options: z.array(z.object({
-        label: z.string().describe("Display label for the option"),
-        value: z.string().describe("Value for the option")
-      })).optional().describe("Options for select, radio, or checkbox fields"),
-      helpText: z.string().optional().describe("Help text to display below the field"),
-      renderCondition: z.string().optional().describe("Condition for when to show this field")
-    })).optional().describe("Specific form fields to include (for form templates)"),
-    formSections: z.array(z.object({
-      id: z.string().describe("Unique identifier for the section"),
-      title: z.string().describe("Section title"),
-      description: z.string().optional().describe("Section description"),
-      columns: z.number().optional().default(1).describe("Number of columns in the section"),
-      fields: z.array(z.object({
-        id: z.string().describe("Unique identifier for the field"),
-        type: z.enum(["text", "email", "password", "number", "phone", "textarea", "select", "checkbox", "radio", "date", "time", "file", "url"]).describe("Type of form field"),
-        label: z.string().describe("Display label for the field"),
-        placeholder: z.string().optional().describe("Placeholder text for the field"),
-        required: z.boolean().optional().default(false).describe("Whether the field is required"),
-        validation: z.object({
-          minLength: z.number().optional().describe("Minimum length for text fields"),
-          maxLength: z.number().optional().describe("Maximum length for text fields"),
-          pattern: z.string().optional().describe("Regex pattern for validation"),
-          message: z.string().optional().describe("Custom validation error message")
-        }).optional().describe("Validation rules for the field"),
-        options: z.array(z.object({
-          label: z.string().describe("Display label for the option"),
-          value: z.string().describe("Value for the option")
-        })).optional().describe("Options for select, radio, or checkbox fields"),
-        helpText: z.string().optional().describe("Help text to display below the field"),
-        renderCondition: z.string().optional().describe("Condition for when to show this field")
-      })).describe("Fields in this section")
-    })).optional().describe("Form sections with fields (for multi-section forms)")
+    // Simplified dynamic content parameters for Google API compatibility
+    customData: z.string().optional().describe("Custom data as JSON string with additional configuration like metrics, product info, etc."),
+    images: z.string().optional().describe("Images configuration as JSON string with array of image objects"),
+    textContent: z.string().optional().describe("Custom text content as JSON string for different sections"),
+    brandingConfig: z.string().optional().describe("Branding configuration as JSON string with logo, colors, fonts, etc.")
   }),
-  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig, formFields, formSections }) => {
+  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig }) => {
     try {
       const mcpClient = getMCPClient();
       
-      // Prepare custom data with form specifications
-      const enhancedCustomData = {
-        ...customData,
-        ...(formFields && { formFields }),
-        ...(formSections && { formSections })
-      };
+      // Parse JSON strings back to objects for MCP server
+      const parsedCustomData = customData ? JSON.parse(customData) : undefined;
+      const parsedImages = images ? JSON.parse(images) : undefined;
+      const parsedTextContent = textContent ? JSON.parse(textContent) : undefined;
+      const parsedBrandingConfig = brandingConfig ? JSON.parse(brandingConfig) : undefined;
       
       // Call the MCP server to generate the template with enhanced parameters
       const result = await mcpClient.callTool({
@@ -124,10 +67,10 @@ const mcpUITool = tool({
           theme,
           primaryColor,
           fullScreen,
-          customData: enhancedCustomData,
-          images,
-          textContent,
-          brandingConfig
+          customData: parsedCustomData,
+          images: parsedImages,
+          textContent: parsedTextContent,
+          brandingConfig: parsedBrandingConfig
         }
       });
 
@@ -377,7 +320,12 @@ export async function POST(req: NextRequest) {
       },
       toolChoice: 'auto',
       temperature: 0.7,
-      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. You are powered by Claude 4 Sonnet via Amazon Bedrock. 
+      system: `You are an expert UI/UX assistant that helps users create dynamic templates using a powerful MCP (Model Context Protocol) server. You have direct access to tools that can generate real, functional UI templates.
+
+AVAILABLE TOOLS:
+- generateUITemplate: Generate dynamic UI templates with rich, contextual data
+- listTemplates: List all available template types and their capabilities  
+- getTemplateExamples: Get example configurations for specific template types
 
 CAPABILITIES:
 - Generate 20+ different types of UI templates (dashboards, forms, tables, analytics, etc.)
@@ -408,54 +356,18 @@ AVAILABLE TEMPLATE TYPES:
 19. **Blog**: Blog layouts with posts and categories
 20. **Portfolio**: Project showcases and professional profiles
 
+IMPORTANT INSTRUCTIONS:
+- When users ask for templates, ALWAYS use the generateUITemplate tool to create them
+- Do NOT describe what you would do - actually generate the template using the tool
+- The generateUITemplate tool will create real, functional templates with sample data
+- You have full access to this tool and should use it whenever users request templates
+
 CONVERSATION FLOW:
 1. When users ask about capabilities, use the listTemplates tool to show what's available
 2. When users want to see examples, use getTemplateExamples to demonstrate
-3. When users want to create something, use generateUITemplate with appropriate parameters
+3. When users want to create something, ALWAYS use generateUITemplate with appropriate parameters
 4. Always be helpful in understanding user requirements and suggesting the best template type
 5. Explain the features and capabilities of each template type clearly
-
-FORM GENERATION - DYNAMIC FIELD CREATION:
-When users request forms, you MUST create dynamic, contextually appropriate fields based on their specific needs:
-
-**For Form Templates:**
-- Analyze the user's request to determine what information they need to collect
-- Create specific form fields that match their requirements exactly
-- Use the formFields parameter to specify individual fields with appropriate types, labels, and validation
-- Use the formSections parameter for multi-section forms with logical grouping
-- Always include relevant validation rules and help text
-- Make fields required or optional based on the context
-
-**Field Types Available:**
-- text: General text input
-- email: Email address with validation
-- password: Password field
-- number: Numeric input
-- phone: Phone number input
-- textarea: Multi-line text
-- select: Dropdown selection
-- checkbox: Multiple choice checkboxes
-- radio: Single choice radio buttons
-- date: Date picker
-- time: Time picker
-- file: File upload
-- url: URL input
-
-**Examples of Dynamic Form Creation:**
-- "Create a job application form" → Include fields for personal info, work experience, education, skills, references
-- "Create a restaurant reservation form" → Include fields for name, party size, date, time, special requests
-- "Create a product feedback form" → Include fields for product rating, review text, category, purchase date
-- "Create a contact form" → Include fields for name, email, subject, message, preferred contact method
-
-**Always specify:**
-- Field IDs (unique identifiers)
-- Field types (matching the available types)
-- Labels (clear, descriptive)
-- Placeholders (helpful examples)
-- Required/optional status
-- Validation rules where appropriate
-- Options for select/radio/checkbox fields
-- Help text for complex fields
 
 FORM SUBMISSION & INTERACTION HANDLING:
 When users submit forms or interact with templates:
@@ -485,7 +397,7 @@ RESPONSE STYLE:
 - When templates are generated, explain what was created and its key features
 - For form submissions, be warm and professional while providing actionable next steps
 
-Remember: The MCP server generates rich, realistic sample data for each template type, making them immediately useful for demonstration and development purposes. When users interact with templates, treat their submissions as real data and provide meaningful, contextual responses.`
+Remember: You have direct access to the generateUITemplate tool and should use it to create real templates whenever users request them. The MCP server generates rich, realistic sample data for each template type, making them immediately useful for demonstration and development purposes.`
     })
 
     return NextResponse.json({
