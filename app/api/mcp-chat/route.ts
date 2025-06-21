@@ -55,11 +55,63 @@ const mcpUITool = tool({
       brandName: z.string().optional(),
       brandColors: z.array(z.string()).optional(),
       fontFamily: z.string().optional()
-    }).optional().describe("Branding configuration for the template")
+    }).optional().describe("Branding configuration for the template"),
+    // Form-specific parameters for dynamic field generation
+    formFields: z.array(z.object({
+      id: z.string().describe("Unique identifier for the field"),
+      type: z.enum(["text", "email", "password", "number", "phone", "textarea", "select", "checkbox", "radio", "date", "time", "file", "url"]).describe("Type of form field"),
+      label: z.string().describe("Display label for the field"),
+      placeholder: z.string().optional().describe("Placeholder text for the field"),
+      required: z.boolean().optional().default(false).describe("Whether the field is required"),
+      validation: z.object({
+        minLength: z.number().optional().describe("Minimum length for text fields"),
+        maxLength: z.number().optional().describe("Maximum length for text fields"),
+        pattern: z.string().optional().describe("Regex pattern for validation"),
+        message: z.string().optional().describe("Custom validation error message")
+      }).optional().describe("Validation rules for the field"),
+      options: z.array(z.object({
+        label: z.string().describe("Display label for the option"),
+        value: z.string().describe("Value for the option")
+      })).optional().describe("Options for select, radio, or checkbox fields"),
+      helpText: z.string().optional().describe("Help text to display below the field"),
+      renderCondition: z.string().optional().describe("Condition for when to show this field")
+    })).optional().describe("Specific form fields to include (for form templates)"),
+    formSections: z.array(z.object({
+      id: z.string().describe("Unique identifier for the section"),
+      title: z.string().describe("Section title"),
+      description: z.string().optional().describe("Section description"),
+      columns: z.number().optional().default(1).describe("Number of columns in the section"),
+      fields: z.array(z.object({
+        id: z.string().describe("Unique identifier for the field"),
+        type: z.enum(["text", "email", "password", "number", "phone", "textarea", "select", "checkbox", "radio", "date", "time", "file", "url"]).describe("Type of form field"),
+        label: z.string().describe("Display label for the field"),
+        placeholder: z.string().optional().describe("Placeholder text for the field"),
+        required: z.boolean().optional().default(false).describe("Whether the field is required"),
+        validation: z.object({
+          minLength: z.number().optional().describe("Minimum length for text fields"),
+          maxLength: z.number().optional().describe("Maximum length for text fields"),
+          pattern: z.string().optional().describe("Regex pattern for validation"),
+          message: z.string().optional().describe("Custom validation error message")
+        }).optional().describe("Validation rules for the field"),
+        options: z.array(z.object({
+          label: z.string().describe("Display label for the option"),
+          value: z.string().describe("Value for the option")
+        })).optional().describe("Options for select, radio, or checkbox fields"),
+        helpText: z.string().optional().describe("Help text to display below the field"),
+        renderCondition: z.string().optional().describe("Condition for when to show this field")
+      })).describe("Fields in this section")
+    })).optional().describe("Form sections with fields (for multi-section forms)")
   }),
-  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig }) => {
+  execute: async ({ templateType, title, description, useCase, theme, primaryColor, fullScreen, customData, images, textContent, brandingConfig, formFields, formSections }) => {
     try {
       const mcpClient = getMCPClient();
+      
+      // Prepare custom data with form specifications
+      const enhancedCustomData = {
+        ...customData,
+        ...(formFields && { formFields }),
+        ...(formSections && { formSections })
+      };
       
       // Call the MCP server to generate the template with enhanced parameters
       const result = await mcpClient.callTool({
@@ -72,7 +124,7 @@ const mcpUITool = tool({
           theme,
           primaryColor,
           fullScreen,
-          customData,
+          customData: enhancedCustomData,
           images,
           textContent,
           brandingConfig
@@ -362,6 +414,48 @@ CONVERSATION FLOW:
 3. When users want to create something, use generateUITemplate with appropriate parameters
 4. Always be helpful in understanding user requirements and suggesting the best template type
 5. Explain the features and capabilities of each template type clearly
+
+FORM GENERATION - DYNAMIC FIELD CREATION:
+When users request forms, you MUST create dynamic, contextually appropriate fields based on their specific needs:
+
+**For Form Templates:**
+- Analyze the user's request to determine what information they need to collect
+- Create specific form fields that match their requirements exactly
+- Use the formFields parameter to specify individual fields with appropriate types, labels, and validation
+- Use the formSections parameter for multi-section forms with logical grouping
+- Always include relevant validation rules and help text
+- Make fields required or optional based on the context
+
+**Field Types Available:**
+- text: General text input
+- email: Email address with validation
+- password: Password field
+- number: Numeric input
+- phone: Phone number input
+- textarea: Multi-line text
+- select: Dropdown selection
+- checkbox: Multiple choice checkboxes
+- radio: Single choice radio buttons
+- date: Date picker
+- time: Time picker
+- file: File upload
+- url: URL input
+
+**Examples of Dynamic Form Creation:**
+- "Create a job application form" → Include fields for personal info, work experience, education, skills, references
+- "Create a restaurant reservation form" → Include fields for name, party size, date, time, special requests
+- "Create a product feedback form" → Include fields for product rating, review text, category, purchase date
+- "Create a contact form" → Include fields for name, email, subject, message, preferred contact method
+
+**Always specify:**
+- Field IDs (unique identifiers)
+- Field types (matching the available types)
+- Labels (clear, descriptive)
+- Placeholders (helpful examples)
+- Required/optional status
+- Validation rules where appropriate
+- Options for select/radio/checkbox fields
+- Help text for complex fields
 
 FORM SUBMISSION & INTERACTION HANDLING:
 When users submit forms or interact with templates:

@@ -666,6 +666,24 @@ export class FormGenerator implements TemplateGenerator<"form"> {
   }
 
   private generateSections(useCase?: string, customData?: Record<string, any>) {
+    // If custom form fields are provided, use them directly
+    if (customData?.formFields && Array.isArray(customData.formFields)) {
+      return [
+        {
+          id: "custom-form",
+          title: "Form Information",
+          description: "Please fill out the required information",
+          columns: 2,
+          fields: customData.formFields
+        }
+      ];
+    }
+
+    // If custom form sections are provided, use them directly
+    if (customData?.formSections && Array.isArray(customData.formSections)) {
+      return customData.formSections;
+    }
+
     // Gaming tournament registration form
     if (useCase?.toLowerCase().includes("gaming") || useCase?.toLowerCase().includes("tournament")) {
       return [
