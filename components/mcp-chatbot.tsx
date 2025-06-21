@@ -448,16 +448,131 @@ Let's build something amazing together! ✨`,
           <div className="max-w-6xl w-full max-h-[90vh] overflow-auto">
             <DynamicTemplate
               config={showTemplate}
-              onInteraction={(data) => {
+              onInteraction={async (data) => {
                 console.log('Template interaction:', data)
-                // Add template interaction to chat as user message
+                
+                // Format the interaction data for better user experience
+                let interactionContent = ''
+                let shouldSendToAI = true
+                
+                // Always send form data to chat, regardless of action type
+                if (data.type === 'API_CALL') {
+                  interactionContent = `I submitted the ${showTemplate.templateType} form with the following data:`
+                } else if (data.type === 'MCP_TOOL_CALL') {
+                  interactionContent = `I submitted the ${showTemplate.templateType} form with the following data:`
+                } else if (data.type === 'CUSTOM_EVENT') {
+                  interactionContent = `I interacted with the ${showTemplate.templateType} template: ${data.eventName}`
+                } else if (data.type === 'NAVIGATE') {
+                  interactionContent = `I navigated to: ${data.navigateTo}`
+                } else {
+                  // Fallback for form submissions or other interactions
+                  interactionContent = `I submitted the ${showTemplate.templateType} template with the following data:`
+                }
+                
+                // Add the interaction data as a user message
                 const interactionMessage: Message = {
                   id: Date.now().toString(),
                   role: 'user',
-                  content: `Template interaction: ${JSON.stringify(data, null, 2)}`,
+                  content: interactionContent,
                   timestamp: new Date()
                 }
+                
                 setMessages(prev => [...prev, interactionMessage])
+                
+                // If we have form data or interaction data, send it to the AI for processing
+                if (shouldSendToAI && (data.data || data.payload || data.arguments)) {
+                  setIsLoading(true)
+                  
+                  // Add a temporary "processing" message
+                  const processingMessage: Message = {
+                    id: (Date.now() + 0.5).toString(),
+                    role: 'assistant',
+                    content: 'Processing your submission...',
+                    timestamp: new Date()
+                  }
+                  setMessages(prev => [...prev, processingMessage])
+                  
+                  try {
+                    // Format the interaction data for better AI understanding
+                    const interactionData = data.data || data.payload || data.arguments
+                    let formattedData = interactionData
+                    
+                    // If it's form data, format it more nicely
+                    if (data.data && typeof data.data === 'object') {
+                      const formFields = Object.entries(data.data)
+                        .filter(([key, value]) => key !== '_action' && value !== undefined && value !== '')
+                        .map(([key, value]) => `- ${key}: ${value}`)
+                        .join('\n')
+                      
+                      if (formFields) {
+                        formattedData = `Form Submission Data:\n${formFields}`
+                      }
+                    }
+                    
+                    // Create a context message that includes the template type and interaction data
+                    const contextMessage = {
+                      role: 'user' as const,
+                      content: `Template Interaction Context:
+Template Type: ${showTemplate.templateType}
+Template Title: ${showTemplate.title}
+Interaction Type: ${data.type}
+${formattedData}
+
+Please process this interaction and provide an appropriate response. If this was a form submission, please acknowledge the submission and suggest next steps. If this was a data interaction, please provide insights or feedback based on the data.`
+                    }
+                    
+                    const response = await fetch('/api/mcp-chat', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        messages: [...messages, interactionMessage].map(msg => ({
+                          role: msg.role,
+                          content: msg.content
+                        })).concat([contextMessage])
+                      })
+                    })
+
+                    if (!response.ok) {
+                      throw new Error('Failed to get response from chatbot')
+                    }
+
+                    const responseData = await response.json()
+                    
+                    // Add the AI response
+                    const assistantMessage: Message = {
+                      id: (Date.now() + 1).toString(),
+                      role: 'assistant',
+                      content: responseData.message || 'Thank you for your submission! I\'ve processed your data.',
+                      timestamp: new Date(),
+                      toolCalls: responseData.toolCalls,
+                      toolResults: responseData.toolResults
+                    }
+
+                    setMessages(prev => [...prev, assistantMessage])
+                  } catch (error) {
+                    console.error('Error processing template interaction:', error)
+                    
+                    // Remove the processing message
+                    setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id))
+                    
+                    const errorMessage: Message = {
+                      id: (Date.now() + 1).toString(),
+                      role: 'assistant',
+                      content: 'Thank you for your submission! I\'ve received your data and will process it accordingly.',
+                      timestamp: new Date()
+                    }
+                    setMessages(prev => [...prev, errorMessage])
+                  } finally {
+                    // Remove the processing message
+                    setMessages(prev => prev.filter(msg => msg.id !== processingMessage.id))
+                    setIsLoading(false)
+                  }
+                }
+                
+                // Close the template after interaction
+                setShowTemplate(null)
               }}
               onClose={() => setShowTemplate(null)}
             />

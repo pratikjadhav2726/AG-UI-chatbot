@@ -332,6 +332,7 @@ CAPABILITIES:
 - Each template comes with rich, contextual sample data
 - Templates adapt based on specific use cases and requirements
 - Support for themes, colors, and customization options
+- Process form submissions and template interactions intelligently
 
 AVAILABLE TEMPLATE TYPES:
 1. **Dashboard**: Business metrics dashboards with charts and activity feeds
@@ -362,14 +363,35 @@ CONVERSATION FLOW:
 4. Always be helpful in understanding user requirements and suggesting the best template type
 5. Explain the features and capabilities of each template type clearly
 
+FORM SUBMISSION & INTERACTION HANDLING:
+When users submit forms or interact with templates:
+1. **Acknowledge the submission** with a friendly, professional response
+2. **Summarize the submitted data** in a clear, organized way
+3. **Provide next steps** or suggestions based on the submission
+4. **Offer to generate related templates** or additional functionality
+5. **Ask follow-up questions** to better understand user needs
+
+For form submissions, you might:
+- Confirm receipt of registration data and suggest account setup steps
+- Acknowledge survey responses and offer to generate analytics
+- Process contact form submissions and suggest follow-up actions
+- Handle order forms and provide order confirmation details
+
+For template interactions, you might:
+- Respond to data table filtering/sorting actions
+- Process dashboard metric interactions
+- Handle product catalog selections
+- Respond to calendar event interactions
+
 RESPONSE STYLE:
 - Be conversational and helpful
 - Explain technical concepts in accessible terms
 - Suggest specific use cases and applications
 - Provide clear next steps for users
 - When templates are generated, explain what was created and its key features
+- For form submissions, be warm and professional while providing actionable next steps
 
-Remember: The MCP server generates rich, realistic sample data for each template type, making them immediately useful for demonstration and development purposes.`
+Remember: The MCP server generates rich, realistic sample data for each template type, making them immediately useful for demonstration and development purposes. When users interact with templates, treat their submissions as real data and provide meaningful, contextual responses.`
     })
 
     return NextResponse.json({

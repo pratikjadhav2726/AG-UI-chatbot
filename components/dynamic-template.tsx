@@ -44,23 +44,71 @@ export function DynamicTemplate({ config, onInteraction, onClose }: DynamicTempl
   }
 
   const handleSubmit = () => {
-    const submitAction = config.actions?.find((a: ActionSchema) => a.trigger === "onSubmit");
-    if (submitAction) {
+    // Handle new submitAction format (single object)
+    if (config.submitAction) {
+      const submitAction = config.submitAction;
+      
       if (submitAction.confirmationMessage) {
         if (!window.confirm(submitAction.confirmationMessage)) return;
       }
 
-      const resolvedPayload = resolvePayload(submitAction.payload || submitAction.arguments, { form: data, customData: config.customData });
+      // Handle different submitAction types
+      if (submitAction.type === 'api') {
+        // API call type
+        onInteraction({
+          type: 'API_CALL',
+          actionId: 'form-submit',
+          apiUrl: submitAction.url || '/api/submit-form',
+          apiMethod: submitAction.method || 'POST',
+          payload: data,
+          data: data, // Always include form data for chat
+          successMessage: submitAction.successMessage,
+          errorMessage: submitAction.errorMessage
+        });
+      } else if (submitAction.type === 'mcp') {
+        // MCP tool call type
+        onInteraction({
+          type: 'MCP_TOOL_CALL',
+          actionId: 'form-submit',
+          toolName: submitAction.toolName || 'generate_ui_template',
+          arguments: { ...data, templateType: config.templateType },
+          data: data // Always include form data for chat
+        });
+      } else {
+        // Default form submission
+        onInteraction({
+          type: 'CUSTOM_EVENT',
+          actionId: 'form-submit',
+          eventName: 'formSubmitted',
+          payload: data,
+          data: data // Always include form data for chat
+        });
+      }
+    }
+    // Handle old actions array format
+    else if (config.actions) {
+      const submitAction = config.actions.find((a: ActionSchema) => a.trigger === "onSubmit");
+      if (submitAction) {
+        if (submitAction.confirmationMessage) {
+          if (!window.confirm(submitAction.confirmationMessage)) return;
+        }
 
-      onInteraction({
-        type: submitAction.type, // MCP_TOOL_CALL, CUSTOM_EVENT, NAVIGATE, API_CALL
-        actionId: submitAction.id,
-        // Pass specific fields based on type
-        ...(submitAction.type === 'MCP_TOOL_CALL' && { toolName: submitAction.toolName, arguments: resolvedPayload }),
-        ...(submitAction.type === 'CUSTOM_EVENT' && { eventName: submitAction.eventName, payload: resolvedPayload }),
-        ...(submitAction.type === 'NAVIGATE' && { navigateTo: submitAction.navigateTo }),
-        ...(submitAction.type === 'API_CALL' && { apiUrl: submitAction.apiUrl, apiMethod: submitAction.apiMethod, payload: resolvedPayload }),
-      });
+        const resolvedPayload = resolvePayload(submitAction.payload || submitAction.arguments, { form: data, customData: config.customData });
+
+        onInteraction({
+          type: submitAction.type, // MCP_TOOL_CALL, CUSTOM_EVENT, NAVIGATE, API_CALL
+          actionId: submitAction.id,
+          // Pass specific fields based on type
+          ...(submitAction.type === 'MCP_TOOL_CALL' && { toolName: submitAction.toolName, arguments: resolvedPayload }),
+          ...(submitAction.type === 'CUSTOM_EVENT' && { eventName: submitAction.eventName, payload: resolvedPayload }),
+          ...(submitAction.type === 'NAVIGATE' && { navigateTo: submitAction.navigateTo }),
+          ...(submitAction.type === 'API_CALL' && { apiUrl: submitAction.apiUrl, apiMethod: submitAction.apiMethod, payload: resolvedPayload }),
+          data: data // Always include form data for chat
+        });
+      } else {
+        // Fallback for actions array without onSubmit action
+        onInteraction({ templateType: config.templateType, data });
+      }
     } else {
       // Fallback or default behavior if no specific onSubmit action is defined
       onInteraction({ templateType: config.templateType, data });
@@ -99,7 +147,7 @@ export function DynamicTemplate({ config, onInteraction, onClose }: DynamicTempl
       case "feed":
         return <FeedTemplate config={config} onDataChange={handleDataChange} />
       case "form":
-        return <FormTemplate config={config} onDataChange={handleDataChange} />
+        return <FormTemplate config={config} onDataChange={handleDataChange} onSubmit={handleSubmit} />
       case "marketplace":
         return <MarketplaceTemplate config={config} onDataChange={handleDataChange} />;
       case "analytics":

@@ -16,9 +16,10 @@ import { evaluateCondition } from "@/lib/condition-evaluator"
 interface FormTemplateProps {
   config: any
   onDataChange: (data: any) => void
+  onSubmit?: () => void
 }
 
-export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
+export function FormTemplate({ config, onDataChange, onSubmit }: FormTemplateProps) {
   const [formData, setFormData] = useState<Record<string, any>>({})
   // currentSection will store the ID of the section
   const [currentSection, setCurrentSection] = useState<string | null>(null);
@@ -60,8 +61,13 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
 
   // Original handleSubmit, ensure this is the one being used by the submit button
   const handleSubmit = () => {
-    if (validateCurrentSection()) {
-      onDataChange({ ...formData, _action: "submit" })
+    if (validateCurrentSectionInternal()) {
+      // Call the parent's onSubmit handler if provided, otherwise fall back to onDataChange
+      if (onSubmit) {
+        onSubmit()
+      } else {
+        onDataChange({ ...formData, _action: "submit" })
+      }
     }
   }
 
@@ -302,7 +308,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
   React.useEffect(() => {
     const firstVisibleSectionId = visibleSections[0]?.id;
     if (firstVisibleSectionId) {
-      if (!visibleSections.some(s => s.id === currentSection)) {
+      if (!visibleSections.some((s: any) => s.id === currentSection)) {
         setCurrentSection(firstVisibleSectionId);
       }
     } else {
@@ -312,7 +318,7 @@ export function FormTemplate({ config, onDataChange }: FormTemplateProps) {
   }, [config.sections, config.customData, formData]);
 
 
-  const currentSectionIndex = visibleSections.findIndex(s => s.id === currentSection);
+  const currentSectionIndex = visibleSections.findIndex((s: any) => s.id === currentSection);
   const currentSectionData = currentSectionIndex !== -1 ? visibleSections[currentSectionIndex] : null;
 
   const progress = currentSectionData && visibleSections.length > 0 ?

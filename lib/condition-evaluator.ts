@@ -55,7 +55,7 @@ export function evaluateCondition(conditionString: string, context: any): boolea
 }
 
 // Helper to get a value from a context object using a dot-separated path
-function getPathValue(obj: any, path: string): any {
+export function getPathValue(obj: any, path: string): any {
   if (!path) return undefined;
   const parts = path.split('.');
   let current = obj;
