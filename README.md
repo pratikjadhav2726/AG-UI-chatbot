@@ -82,12 +82,10 @@ npm run dev
 # Generative UI Chatbot with Amazon Bedrock
 
 A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP) and Claude 4 Sonnet via Amazon Bedrock. The system features a sophisticated MCP server that can generate over 20 different types of UI templates with realistic data and configurations.
+<img width="899" alt="image" src="https://github.com/user-attachments/assets/33e197d4-b078-44dc-b389-ee16f5d8fc22" />
+<img width="1209" alt="image" src="https://github.com/user-attachments/assets/5ebc5b9e-5e3e-459f-89b2-d184465ebe73" />
 
-![image](https://github.com/user-attachments/assets/c17ec7aa-f345-442c-a4e1-2f9e8d439f8f)
 
-![image](https://github.com/user-attachments/assets/48bd560a-efc1-4b3e-89c1-509ded0516b3)
-![image](https://github.com/user-attachments/assets/3ed12e86-ebe1-4bd3-b0ec-f3cfcb2d6df2)
-![image](https://github.com/user-attachments/assets/c6195744-3041-4e73-83d1-a9b8fbf1771c)
 
 ## 🚀 Features
 
