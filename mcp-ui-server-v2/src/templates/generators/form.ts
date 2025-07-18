@@ -235,6 +235,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             label: 'Phone Number',
             placeholder: 'Enter your phone number',
             required: false,
+              disabled: false,
             grid: { span: 6, offset: 0 }
           },
           {
@@ -243,6 +244,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             label: 'Company',
             placeholder: 'Enter your company name',
             required: false,
+              disabled: false,
             grid: { span: 6, offset: 0 }
           },
           {
@@ -251,11 +253,11 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             label: 'Subject',
             required: true,
             options: [
-              { value: 'general', label: 'General Inquiry' },
-              { value: 'support', label: 'Technical Support' },
-              { value: 'sales', label: 'Sales Question' },
-              { value: 'partnership', label: 'Partnership' },
-              { value: 'other', label: 'Other' }
+              { value: 'general', label: 'General Inquiry', disabled: false },
+              { value: 'support', label: 'Technical Support', disabled: false },
+              { value: 'sales', label: 'Sales Question', disabled: false },
+              { value: 'partnership', label: 'Partnership', disabled: false },
+              { value: 'other', label: 'Other', disabled: false }
             ],
             grid: { span: 12, offset: 0 }
           },
@@ -281,7 +283,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Send Message',
           variant: 'primary',
-          size: 'md'
+          size: 'md',
+          disabled: false,
+          loading: false
         },
         reset: {
           label: 'Clear Form',
@@ -371,6 +375,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'checkbox',
               label: 'Subscribe to newsletter',
               defaultValue: true,
+              disabled: false,
               grid: { span: 12, offset: 0 }
             },
             {
@@ -378,6 +383,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'checkbox',
               label: 'I agree to the Terms of Service and Privacy Policy',
               required: true,
+              disabled: false,
               grid: { span: 12, offset: 0 }
             }
           ]
@@ -394,7 +400,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Create Account',
           variant: 'primary',
-          size: 'lg'
+          size: 'lg',
+          disabled: false,
+          loading: false
         },
         cancel: {
           label: 'Already have an account?',
@@ -434,11 +442,11 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               label: 'How satisfied are you with our service?',
               required: true,
               options: [
-                { value: '5', label: 'Very Satisfied' },
-                { value: '4', label: 'Satisfied' },
-                { value: '3', label: 'Neutral' },
-                { value: '2', label: 'Dissatisfied' },
-                { value: '1', label: 'Very Dissatisfied' }
+                { value: '5', label: 'Very Satisfied', disabled: false },
+                { value: '4', label: 'Satisfied', disabled: false },
+                { value: '3', label: 'Neutral', disabled: false },
+                { value: '2', label: 'Dissatisfied', disabled: false },
+                { value: '1', label: 'Very Dissatisfied', disabled: false }
               ],
               grid: { span: 12, offset: 0 }
             },
@@ -472,7 +480,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Submit Survey',
           variant: 'primary',
-          size: 'md'
+          size: 'md',
+          disabled: false,
+          loading: false
         }
       },
       validation: {
@@ -506,6 +516,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'Full Name',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -513,6 +524,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'tel',
               label: 'Phone Number',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -520,6 +532,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'Street Address',
               required: true,
+              disabled: false,
               grid: { span: 12, offset: 0 }
             },
             {
@@ -527,6 +540,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'City',
               required: true,
+              disabled: false,
               grid: { span: 4, offset: 0 }
             },
             {
@@ -535,9 +549,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               label: 'State',
               required: true,
               options: [
-                { value: 'CA', label: 'California' },
-                { value: 'NY', label: 'New York' },
-                { value: 'TX', label: 'Texas' }
+                { value: 'CA', label: 'California', disabled: false },
+                { value: 'NY', label: 'New York', disabled: false },
+                { value: 'TX', label: 'Texas', disabled: false }
               ],
               grid: { span: 4, offset: 0 }
             },
@@ -596,7 +610,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Place Order',
           variant: 'primary',
-          size: 'lg'
+          size: 'lg',
+          disabled: false,
+          loading: false
         },
         cancel: {
           label: 'Cancel',
@@ -642,6 +658,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             type: 'file',
             label: 'Profile Picture',
             description: 'Upload a profile picture (max 5MB)',
+              disabled: false,
             grid: { span: 12, offset: 0 }
           },
           {
@@ -657,6 +674,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             type: 'url',
             label: 'Website',
             placeholder: 'https://example.com',
+              disabled: false,
             grid: { span: 6, offset: 0 }
           },
           {
@@ -664,6 +682,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             type: 'text',
             label: 'Location',
             placeholder: 'City, Country',
+              disabled: false,
             grid: { span: 6, offset: 0 }
           }
         ]
@@ -679,7 +698,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Save Changes',
           variant: 'primary',
-          size: 'md'
+          size: 'md',
+          disabled: false,
+          loading: false
         },
         reset: {
           label: 'Reset',
@@ -718,6 +739,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'checkbox',
               label: 'Email notifications',
               defaultValue: true,
+              disabled: false,
               grid: { span: 12, offset: 0 }
             },
             {
@@ -725,6 +747,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'checkbox',
               label: 'Push notifications',
               defaultValue: false,
+              disabled: false,
               grid: { span: 12, offset: 0 }
             }
           ]
@@ -739,9 +762,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               label: 'Profile visibility',
               required: true,
               options: [
-                { value: 'public', label: 'Public' },
-                { value: 'friends', label: 'Friends only' },
-                { value: 'private', label: 'Private' }
+                { value: 'public', label: 'Public', disabled: false },
+                { value: 'friends', label: 'Friends only', disabled: false },
+                { value: 'private', label: 'Private', disabled: false }
               ],
               defaultValue: 'friends',
               grid: { span: 12, offset: 0 }
@@ -760,7 +783,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Save Settings',
           variant: 'primary',
-          size: 'md'
+          size: 'md',
+          disabled: false,
+          loading: false
         }
       },
       validation: {
@@ -794,6 +819,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'Full Name',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -801,6 +827,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'email',
               label: 'Email',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -808,6 +835,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'tel',
               label: 'Phone Number',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -815,6 +843,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'url',
               label: 'LinkedIn Profile',
               placeholder: 'https://linkedin.com/in/username',
+              disabled: false,
               grid: { span: 6, offset: 0 }
             }
           ]
@@ -829,6 +858,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               label: 'Resume/CV',
               description: 'Upload your resume (PDF preferred)',
               required: true,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -836,6 +866,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'file',
               label: 'Cover Letter',
               description: 'Optional cover letter',
+              disabled: false,
               grid: { span: 6, offset: 0 }
             }
           ]
@@ -850,11 +881,11 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               label: 'Years of Experience',
               required: true,
               options: [
-                { value: '0-1', label: '0-1 years' },
-                { value: '2-3', label: '2-3 years' },
-                { value: '4-5', label: '4-5 years' },
-                { value: '6-10', label: '6-10 years' },
-                { value: '10+', label: '10+ years' }
+                { value: '0-1', label: '0-1 years', disabled: false },
+                { value: '2-3', label: '2-3 years', disabled: false },
+                { value: '4-5', label: '4-5 years', disabled: false },
+                { value: '6-10', label: '6-10 years', disabled: false },
+                { value: '10+', label: '10+ years', disabled: false }
               ],
               grid: { span: 12, offset: 0 }
             },
@@ -881,7 +912,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Submit Application',
           variant: 'primary',
-          size: 'lg'
+          size: 'lg',
+          disabled: false,
+          loading: false
         },
         cancel: {
           label: 'Save Draft',
@@ -940,7 +973,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         submit: {
           label: 'Submit',
           variant: 'primary',
-          size: 'md'
+          size: 'md',
+          disabled: false,
+          loading: false
         }
       },
       validation: {

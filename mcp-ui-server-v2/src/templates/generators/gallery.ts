@@ -88,7 +88,7 @@ export class GalleryGenerator implements TemplateGenerator<GalleryConfig> {
     ];
   }
 
-  private generateSampleItems(): GalleryItemSchema[] {
+  private generateSampleItems(): z.infer<typeof GalleryItemSchema>[] {
     return [
       {
         id: '1',

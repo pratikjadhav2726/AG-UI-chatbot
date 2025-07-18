@@ -109,7 +109,9 @@ export class RateLimitError extends MCPError {
   constructor(message: string, retryAfter?: number) {
     super(-32607, `Rate limit exceeded: ${message}`, { retryAfter });
     this.name = 'RateLimitError';
-    this.retryAfter = retryAfter;
+    if (retryAfter !== undefined) {
+      this.retryAfter = retryAfter;
+    }
     Object.setPrototypeOf(this, RateLimitError.prototype);
   }
 }

@@ -246,13 +246,11 @@ export class ToolManager {
     }
     
     if (schema.type === 'string') {
-      let zodString = z.string();
-      
       if (schema.enum) {
-        zodString = z.enum(schema.enum as [string, ...string[]]);
+        return z.enum(schema.enum as [string, ...string[]]);
       }
       
-      return zodString;
+      return z.string();
     }
     
     if (schema.type === 'number') {
@@ -287,7 +285,7 @@ export class ToolManager {
     const params = args as unknown as TemplateGenerationParams;
     
     // Check cache first
-    const cached = this.cache.getCachedTemplate(params.templateType, params);
+    const cached = this.cache.getCachedTemplate(params.templateType, params as unknown as Record<string, unknown>);
     if (cached) {
       this.logger.debug('Template served from cache', { templateType: params.templateType });
       return cached;
@@ -297,7 +295,7 @@ export class ToolManager {
     const template = await this.templateEngine.generateTemplate(params);
     
     // Cache the result
-    this.cache.cacheTemplate(params.templateType, params, template, 300);
+    this.cache.cacheTemplate(params.templateType, params as unknown as Record<string, unknown>, template, 300);
     
     return template;
   }

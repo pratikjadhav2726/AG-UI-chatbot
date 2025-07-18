@@ -5,6 +5,16 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  SubscribeRequestSchema,
+  UnsubscribeRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 import type {
   ServerConfig,
   MCPProtocolVersion,
@@ -73,7 +83,7 @@ export class MCPServer {
    */
   private setupToolHandlers(): void {
     // List available tools
-    this.server.setRequestHandler('tools/list', async () => {
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       try {
         const startTime = Date.now();
         const tools = await this.toolManager.listTools();
@@ -89,7 +99,7 @@ export class MCPServer {
     });
 
     // Call a tool
-    this.server.setRequestHandler('tools/call', async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const startTime = Date.now();
       let toolName = 'unknown';
       
@@ -140,7 +150,7 @@ export class MCPServer {
    */
   private setupResourceHandlers(): void {
     // List available resources
-    this.server.setRequestHandler('resources/list', async () => {
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       try {
         const startTime = Date.now();
         const resources = await this.resourceManager.listResources();
@@ -156,7 +166,7 @@ export class MCPServer {
     });
 
     // Read a resource
-    this.server.setRequestHandler('resources/read', async (request) => {
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       try {
         const { uri } = request.params as { uri: string };
         
@@ -182,7 +192,7 @@ export class MCPServer {
 
     // Subscribe to resource changes (if supported)
     if (this.config.capabilities.resources?.subscribe) {
-      this.server.setRequestHandler('resources/subscribe', async (request) => {
+      this.server.setRequestHandler(SubscribeRequestSchema, async (request) => {
         try {
           const { uri } = request.params as { uri: string };
           await this.resourceManager.subscribe(uri);
@@ -194,7 +204,7 @@ export class MCPServer {
         }
       });
 
-      this.server.setRequestHandler('resources/unsubscribe', async (request) => {
+      this.server.setRequestHandler(UnsubscribeRequestSchema, async (request) => {
         try {
           const { uri } = request.params as { uri: string };
           await this.resourceManager.unsubscribe(uri);
@@ -213,7 +223,7 @@ export class MCPServer {
    */
   private setupPromptHandlers(): void {
     // List available prompts
-    this.server.setRequestHandler('prompts/list', async () => {
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       try {
         const startTime = Date.now();
         const prompts = await this.promptManager.listPrompts();
@@ -229,7 +239,7 @@ export class MCPServer {
     });
 
     // Get a prompt
-    this.server.setRequestHandler('prompts/get', async (request) => {
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
       try {
         const { name, arguments: args } = request.params as { name: string; arguments?: Record<string, unknown> };
         
