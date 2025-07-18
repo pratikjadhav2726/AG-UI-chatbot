@@ -250,7 +250,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'avatar',
           width: 60,
           sortable: false,
-          filterable: false
+          filterable: false,
+          align: "left",
+          hidden: false
         },
         {
           id: 'name',
@@ -259,7 +261,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          minWidth: 150
+          minWidth: 150,
+          align: "left",
+          hidden: false
         },
         {
           id: 'email',
@@ -268,7 +272,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          minWidth: 200
+          minWidth: 200,
+          align: "left",
+          hidden: false
         },
         {
           id: 'role',
@@ -282,7 +288,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'editor', label: 'Editor', color: 'blue' },
             { value: 'user', label: 'User', color: 'green' },
             { value: 'guest', label: 'Guest', color: 'gray' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'status',
@@ -295,7 +303,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'active', label: 'Active', color: 'green' },
             { value: 'inactive', label: 'Inactive', color: 'gray' },
             { value: 'suspended', label: 'Suspended', color: 'red' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'lastLogin',
@@ -306,8 +316,11 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'datetime',
-            options: { relative: true }
-          }
+            options: { relative: true },
+          hidden: false
+        },
+          align: "left",
+          hidden: false
         },
         {
           id: 'createdAt',
@@ -318,7 +331,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'date'
-          }
+          },
+          align: "left",
+          hidden: false
         },
         {
           id: 'actions',
@@ -328,7 +343,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           width: 120,
           sortable: false,
           filterable: false,
-          fixed: 'right'
+          fixed: 'right',
+          align: "center",
+          hidden: false
         }
       ],
       data: this.generateSampleUserData(),
@@ -397,6 +414,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'View',
             icon: 'Eye',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'viewUser'
           },
           {
@@ -404,6 +424,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Edit',
             icon: 'Edit',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'editUser'
           },
           {
@@ -411,11 +434,15 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Delete',
             icon: 'Trash',
             variant: 'destructive',
+              size: "md",
+              disabled: false,
             onClick: 'deleteUser',
             showInDropdown: true,
             confirm: {
               title: 'Delete User',
-              description: 'Are you sure you want to delete this user? This action cannot be undone.'
+              description: 'Are you sure you want to delete this user? This action cannot be undone.',
+              confirmText: "Confirm",
+              cancelText: "Cancel"
             }
           }
         ],
@@ -426,9 +453,14 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             icon: 'Trash',
             variant: 'destructive',
             onClick: 'bulkDeleteUsers',
+              size: "md",
+              disabled: false,
+              showInDropdown: false,
             confirm: {
               title: 'Delete Users',
-              description: 'Are you sure you want to delete the selected users?'
+              description: 'Are you sure you want to delete the selected users?',
+              confirmText: "Confirm",
+              cancelText: "Cancel"
             }
           },
           {
@@ -436,6 +468,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Export Selected',
             icon: 'Download',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'bulkExportUsers'
           }
         ],
@@ -445,6 +480,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Add User',
             icon: 'Plus',
             variant: 'primary',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'addUser'
           }
         ]
@@ -455,6 +493,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         bordered: true,
         striped: false,
         hover: true,
+        compact: false,
         stickyHeader: true
       },
       responsive: {
@@ -480,7 +519,10 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           label: 'Add User',
           icon: 'Plus',
           variant: 'primary',
-          onClick: 'addUser'
+          size: "md",
+            disabled: false,
+            showInDropdown: false,
+            onClick: 'addUser'
         }
       }
     };
@@ -499,7 +541,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'image',
           width: 80,
           sortable: false,
-          filterable: false
+          filterable: false,
+          align: "left",
+          hidden: false
         },
         {
           id: 'name',
@@ -508,7 +552,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          minWidth: 200
+          minWidth: 200,
+          align: "left",
+          hidden: false
         },
         {
           id: 'sku',
@@ -517,7 +563,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          width: 120
+          width: 120,
+          align: "left",
+          hidden: false
         },
         {
           id: 'category',
@@ -531,7 +579,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'clothing', label: 'Clothing', color: 'green' },
             { value: 'books', label: 'Books', color: 'purple' },
             { value: 'home', label: 'Home & Garden', color: 'orange' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'price',
@@ -544,7 +594,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           format: {
             type: 'currency',
             options: { currency: 'USD' }
-          }
+          },
+          hidden: false
         },
         {
           id: 'stock',
@@ -553,7 +604,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'number',
           sortable: true,
           filterable: true,
-          align: 'center'
+          align: 'center',
+          hidden: false
         },
         {
           id: 'status',
@@ -566,7 +618,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'active', label: 'Active', color: 'green' },
             { value: 'draft', label: 'Draft', color: 'gray' },
             { value: 'out-of-stock', label: 'Out of Stock', color: 'red' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'actions',
@@ -576,7 +630,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           width: 120,
           sortable: false,
           filterable: false,
-          fixed: 'right'
+          fixed: 'right',
+          align: "center",
+          hidden: false
         }
       ],
       data: this.generateSampleProductData(),
@@ -640,6 +696,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Edit',
             icon: 'Edit',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'editProduct'
           },
           {
@@ -647,6 +706,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Duplicate',
             icon: 'Copy',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'duplicateProduct'
           },
           {
@@ -654,11 +716,15 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Delete',
             icon: 'Trash',
             variant: 'destructive',
+              size: "md",
+              disabled: false,
             showInDropdown: true,
             onClick: 'deleteProduct',
             confirm: {
               title: 'Delete Product',
-              description: 'Are you sure you want to delete this product?'
+              description: 'Are you sure you want to delete this product?',
+              confirmText: "Confirm",
+              cancelText: "Cancel"
             }
           }
         ],
@@ -668,6 +734,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Update Status',
             icon: 'RefreshCw',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'bulkUpdateStatus'
           }
         ],
@@ -677,6 +746,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Add Product',
             icon: 'Plus',
             variant: 'primary',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'addProduct'
           },
           {
@@ -684,6 +756,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Import',
             icon: 'Upload',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'importProducts'
           }
         ]
@@ -694,6 +769,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         bordered: true,
         striped: true,
         hover: true,
+        compact: false,
         stickyHeader: true
       },
       responsive: {
@@ -715,7 +791,10 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           label: 'Add Product',
           icon: 'Plus',
           variant: 'primary',
-          onClick: 'addProduct'
+          size: "md",
+            disabled: false,
+            showInDropdown: false,
+            onClick: 'addProduct'
         }
       }
     };
@@ -734,7 +813,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'link',
           sortable: true,
           filterable: true,
-          width: 120
+          width: 120,
+          align: "left",
+          hidden: false
         },
         {
           id: 'customer',
@@ -743,7 +824,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          minWidth: 150
+          minWidth: 150,
+          align: "left",
+          hidden: false
         },
         {
           id: 'date',
@@ -754,7 +837,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'date'
-          }
+          },
+          align: "left",
+          hidden: false
         },
         {
           id: 'status',
@@ -769,7 +854,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'shipped', label: 'Shipped', color: 'purple' },
             { value: 'delivered', label: 'Delivered', color: 'green' },
             { value: 'cancelled', label: 'Cancelled', color: 'red' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'total',
@@ -782,7 +869,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           format: {
             type: 'currency',
             options: { currency: 'USD' }
-          }
+          },
+          hidden: false
         },
         {
           id: 'items',
@@ -791,7 +879,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'number',
           sortable: true,
           filterable: false,
-          align: 'center'
+          align: 'center',
+          hidden: false
         },
         {
           id: 'actions',
@@ -801,7 +890,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           width: 120,
           sortable: false,
           filterable: false,
-          fixed: 'right'
+          fixed: 'right',
+          align: "center",
+          hidden: false
         }
       ],
       data: this.generateSampleOrderData(),
@@ -867,6 +958,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'View Details',
             icon: 'Eye',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'viewOrder'
           },
           {
@@ -874,6 +968,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Print',
             icon: 'Printer',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'printOrder'
           },
           {
@@ -881,11 +978,15 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Cancel Order',
             icon: 'X',
             variant: 'destructive',
+              size: "md",
+              disabled: false,
             showInDropdown: true,
             onClick: 'cancelOrder',
             confirm: {
               title: 'Cancel Order',
-              description: 'Are you sure you want to cancel this order?'
+              description: 'Are you sure you want to cancel this order?',
+              confirmText: "Confirm",
+              cancelText: "Cancel"
             }
           }
         ],
@@ -895,6 +996,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Update Status',
             icon: 'RefreshCw',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'bulkUpdateOrderStatus'
           },
           {
@@ -902,6 +1006,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Export Selected',
             icon: 'Download',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'bulkExportOrders'
           }
         ],
@@ -911,6 +1018,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Create Order',
             icon: 'Plus',
             variant: 'primary',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'createOrder'
           }
         ]
@@ -921,6 +1031,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         bordered: true,
         striped: false,
         hover: true,
+        compact: false,
         stickyHeader: true
       },
       responsive: {
@@ -958,7 +1069,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'text',
           sortable: true,
           filterable: true,
-          minWidth: 180
+          minWidth: 180,
+          align: "left",
+          hidden: false
         },
         {
           id: 'value',
@@ -971,7 +1084,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           format: {
             type: 'number',
             options: { notation: 'compact' }
-          }
+          },
+          hidden: false
         },
         {
           id: 'change',
@@ -983,7 +1097,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           align: 'right',
           format: {
             type: 'percentage'
-          }
+          },
+          hidden: false
         },
         {
           id: 'trend',
@@ -992,7 +1107,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           type: 'progress',
           sortable: false,
           filterable: false,
-          width: 100
+          width: 100,
+          align: "center",
+          hidden: false
         },
         {
           id: 'category',
@@ -1006,7 +1123,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             { value: 'conversion', label: 'Conversion', color: 'green' },
             { value: 'revenue', label: 'Revenue', color: 'purple' },
             { value: 'engagement', label: 'Engagement', color: 'orange' }
-          ]
+          ],
+          align: "left",
+          hidden: false
         },
         {
           id: 'lastUpdated',
@@ -1017,8 +1136,11 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'datetime',
-            options: { relative: true }
-          }
+            options: { relative: true },
+          hidden: false
+        },
+          align: "left",
+          hidden: false
         }
       ],
       data: this.generateSampleAnalyticsData(),
@@ -1056,7 +1178,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         },
         selection: {
           enabled: false,
-          type: 'single'
+          type: 'single',
+          selectAll: false
         },
         export: {
           enabled: true,
@@ -1076,6 +1199,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'View Details',
             icon: 'BarChart',
             variant: 'ghost',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'viewMetricDetails'
           }
         ],
@@ -1086,6 +1212,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
             label: 'Refresh All',
             icon: 'RefreshCw',
             variant: 'outline',
+            size: "md",
+            disabled: false,
+            showInDropdown: false,
             onClick: 'refreshAllMetrics'
           }
         ]
@@ -1096,6 +1225,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         bordered: true,
         striped: true,
         hover: true,
+        compact: false,
         stickyHeader: true
       },
       responsive: {
@@ -1136,7 +1266,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
   }
 
   private generateGenericTable(title: string, params: TemplateGenerationParams): DataTableConfig {
-    const columnCount = params.customData?.columnCount || 5;
+    const columnCount = Number(params.customData?.columnCount) || 5;
     const columns = [];
 
     for (let i = 0; i < columnCount; i++) {
@@ -1146,7 +1276,9 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         header: `Column ${i + 1}`,
         type: 'text' as const,
         sortable: true,
-        filterable: true
+        filterable: true,
+        align: 'left' as const,
+        hidden: false
       });
     }
 
@@ -1165,7 +1297,7 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
         refresh: { enabled: false }
       },
       actions: { row: [], bulk: [], toolbar: [] },
-      styling: { theme: 'auto', size: 'md', bordered: true, striped: false, hover: true, stickyHeader: false },
+      styling: { theme: 'auto', size: 'md', compact: false, bordered: true, striped: false, hover: true, stickyHeader: false },
       responsive: { enabled: true, breakpoint: 'md', stackedLayout: true },
       loading: { enabled: false, skeleton: true, rows: 5 },
       empty: { title: 'No data available', description: 'Data will appear here when available' }

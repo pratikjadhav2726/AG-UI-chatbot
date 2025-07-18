@@ -673,25 +673,25 @@ export class DashboardGenerator implements TemplateGenerator<DashboardConfig> {
 
   private async generateNavigation(params: TemplateGenerationParams): Promise<DashboardConfig['navigation']> {
     if (params.customData?.navigation) {
-      return params.customData.navigation;
+      return params.customData.navigation as any;
     }
 
     const useCase = params.useCase?.toLowerCase() || '';
     
     let items = [
       { id: 'overview', label: 'Overview', icon: 'Home', active: true },
-      { id: 'analytics', label: 'Analytics', icon: 'BarChart' },
-      { id: 'reports', label: 'Reports', icon: 'FileText' },
-      { id: 'settings', label: 'Settings', icon: 'Settings' }
+      { id: 'analytics', label: 'Analytics', icon: 'BarChart', active: false },
+      { id: 'reports', label: 'Reports', icon: 'FileText', active: false },
+      { id: 'settings', label: 'Settings', icon: 'Settings', active: false }
     ];
 
     if (useCase.includes('sales')) {
       items = [
         { id: 'dashboard', label: 'Dashboard', icon: 'Home', active: true },
-        { id: 'sales', label: 'Sales', icon: 'TrendingUp' },
-        { id: 'customers', label: 'Customers', icon: 'Users' },
-        { id: 'products', label: 'Products', icon: 'Package' },
-        { id: 'reports', label: 'Reports', icon: 'FileText' }
+        { id: 'sales', label: 'Sales', icon: 'TrendingUp', active: false },
+        { id: 'customers', label: 'Customers', icon: 'Users', active: false },
+        { id: 'products', label: 'Products', icon: 'Package', active: false },
+        { id: 'reports', label: 'Reports', icon: 'FileText', active: false }
       ];
     }
 

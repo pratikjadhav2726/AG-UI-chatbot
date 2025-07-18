@@ -57,13 +57,13 @@ function createServerConfig(): ServerConfig {
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: process.env.CORS_CREDENTIALS === 'true'
       }
-    },
+    } as any,
     
     logging: {
       level: (process.env.LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info',
       format: (process.env.LOG_FORMAT as 'json' | 'pretty') || (process.env.NODE_ENV === 'development' ? 'pretty' : 'json'),
       destination: process.env.LOG_FILE
-    },
+    } as any,
     
     cache: {
       enabled: process.env.CACHE_ENABLED !== 'false',

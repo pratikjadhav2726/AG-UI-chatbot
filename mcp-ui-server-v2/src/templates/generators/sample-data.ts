@@ -417,7 +417,11 @@ export class SampleDataGenerator {
     if (array.length === 0) {
       throw new Error('Cannot choose from empty array');
     }
-    return array[Math.floor(Math.random() * array.length)];
+    const result = array[Math.floor(Math.random() * array.length)];
+    if (result === undefined) {
+      throw new Error('Selected undefined value from array');
+    }
+    return result;
   }
 
   private randomBoolean(probability: number = 0.5): boolean {

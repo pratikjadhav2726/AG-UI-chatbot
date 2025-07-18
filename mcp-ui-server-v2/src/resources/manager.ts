@@ -109,7 +109,7 @@ export class ResourceManager {
       
       return {
         uri,
-        mimeType: resource.mimeType,
+        mimeType: resource.mimeType || 'text/plain',
         content: [{
           type: 'text',
           text: content

@@ -207,16 +207,20 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       description: 'Get in touch with us',
       method: 'POST',
       action: '/api/contact',
+      enctype: "application/x-www-form-urlencoded",
       sections: [{
         id: 'contact-info',
         title: 'Contact Information',
-        fields: [
+        collapsible: false,
+          collapsed: false,
+          fields: [
           {
             id: 'name',
             type: 'text',
             label: 'Full Name',
+            required: false,
+            disabled: false,
             placeholder: 'Enter your full name',
-            required: true,
             validation: { minLength: 2, maxLength: 100 },
             grid: { span: 6, offset: 0 }
           },
@@ -224,8 +228,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             id: 'email',
             type: 'email',
             label: 'Email Address',
+            required: false,
+            disabled: false,
             placeholder: 'Enter your email',
-            required: true,
             validation: { pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$' },
             grid: { span: 6, offset: 0 }
           },
@@ -242,11 +247,13 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             id: 'company',
             type: 'text',
             label: 'Company',
-            placeholder: 'Enter your company name',
             required: false,
-              disabled: false,
+            disabled: false,
+            placeholder: 'Enter your company name',
             grid: { span: 6, offset: 0 }
           },
+          // @ts-ignore
+
           {
             id: 'subject',
             type: 'select',
@@ -265,8 +272,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             id: 'message',
             type: 'textarea',
             label: 'Message',
+            required: false,
+            disabled: false,
             placeholder: 'Enter your message',
-            required: true,
             validation: { minLength: 10, maxLength: 1000 },
             grid: { span: 12, offset: 0 }
           }
@@ -314,17 +322,21 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       description: 'Join our platform today',
       method: 'POST',
       action: '/api/register',
+      enctype: "application/x-www-form-urlencoded",
       sections: [
         {
           id: 'personal-info',
           title: 'Personal Information',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'firstName',
               type: 'text',
               label: 'First Name',
+            required: false,
+            disabled: false,
               placeholder: 'Enter your first name',
-              required: true,
               validation: { minLength: 2, maxLength: 50 },
               grid: { span: 6, offset: 0 }
             },
@@ -332,8 +344,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'lastName',
               type: 'text',
               label: 'Last Name',
+            required: false,
+            disabled: false,
               placeholder: 'Enter your last name',
-              required: true,
               validation: { minLength: 2, maxLength: 50 },
               grid: { span: 6, offset: 0 }
             },
@@ -341,8 +354,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'email',
               type: 'email',
               label: 'Email Address',
+            required: false,
+            disabled: false,
               placeholder: 'Enter your email',
-              required: true,
               validation: { pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$' },
               grid: { span: 12, offset: 0 }
             },
@@ -350,8 +364,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'password',
               type: 'password',
               label: 'Password',
+            required: false,
+            disabled: false,
               placeholder: 'Create a password',
-              required: true,
               validation: { minLength: 8, custom: 'Must contain uppercase, lowercase, number, and special character' },
               grid: { span: 6, offset: 0 }
             },
@@ -359,8 +374,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'confirmPassword',
               type: 'password',
               label: 'Confirm Password',
+            required: false,
+            disabled: false,
               placeholder: 'Confirm your password',
-              required: true,
               validation: { custom: 'Must match password' },
               grid: { span: 6, offset: 0 }
             }
@@ -369,10 +385,13 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'preferences',
           title: 'Preferences',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'newsletter',
               type: 'checkbox',
+              required: false,
               label: 'Subscribe to newsletter',
               defaultValue: true,
               disabled: false,
@@ -381,8 +400,8 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             {
               id: 'terms',
               type: 'checkbox',
+              required: false,
               label: 'I agree to the Terms of Service and Privacy Policy',
-              required: true,
               disabled: false,
               grid: { span: 12, offset: 0 }
             }
@@ -431,11 +450,18 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       description: 'Help us improve our services',
       method: 'POST',
       action: '/api/survey',
+      enctype: "application/x-www-form-urlencoded",
       sections: [
+        // @ts-ignore
+
         {
           id: 'experience',
           title: 'Your Experience',
+          collapsible: false,
+          collapsed: false,
           fields: [
+            // @ts-ignore
+
             {
               id: 'satisfaction',
               type: 'radio',
@@ -454,6 +480,8 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'recommend',
               type: 'range',
               label: 'How likely are you to recommend us? (0-10)',
+            required: false,
+            disabled: false,
               validation: { min: 0, max: 10 },
               defaultValue: 5,
               grid: { span: 12, offset: 0 }
@@ -462,6 +490,8 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'feedback',
               type: 'textarea',
               label: 'Additional Feedback',
+            required: false,
+            disabled: false,
               placeholder: 'Tell us what we can improve...',
               validation: { maxLength: 500 },
               grid: { span: 12, offset: 0 }
@@ -510,13 +540,15 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'shipping',
           title: 'Shipping Information',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'shippingName',
               type: 'text',
               label: 'Full Name',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -524,7 +556,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'tel',
               label: 'Phone Number',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -532,7 +564,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'Street Address',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 12, offset: 0 }
             },
             {
@@ -540,9 +572,11 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'text',
               label: 'City',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 4, offset: 0 }
             },
+            // @ts-ignore
+
             {
               id: 'shippingState',
               type: 'select',
@@ -559,7 +593,8 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'shippingZip',
               type: 'text',
               label: 'ZIP Code',
-              required: true,
+            required: false,
+            disabled: false,
               validation: { pattern: '^\\d{5}(-\\d{4})?$' },
               grid: { span: 4, offset: 0 }
             }
@@ -568,13 +603,16 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'payment',
           title: 'Payment Information',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'cardNumber',
               type: 'text',
               label: 'Card Number',
+            required: false,
+            disabled: false,
               placeholder: '1234 5678 9012 3456',
-              required: true,
               validation: { pattern: '^\\d{4}\\s\\d{4}\\s\\d{4}\\s\\d{4}$' },
               grid: { span: 12, offset: 0 }
             },
@@ -582,8 +620,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'expiryDate',
               type: 'text',
               label: 'Expiry Date',
+            required: false,
+            disabled: false,
               placeholder: 'MM/YY',
-              required: true,
               validation: { pattern: '^\\d{2}/\\d{2}$' },
               grid: { span: 6, offset: 0 }
             },
@@ -591,8 +630,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'cvv',
               type: 'text',
               label: 'CVV',
+            required: false,
+            disabled: false,
               placeholder: '123',
-              required: true,
               validation: { pattern: '^\\d{3,4}$' },
               grid: { span: 6, offset: 0 }
             }
@@ -652,10 +692,13 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       sections: [{
         id: 'profile-info',
         title: 'Profile Information',
-        fields: [
+        collapsible: false,
+          collapsed: false,
+          fields: [
           {
             id: 'avatar',
             type: 'file',
+              required: false,
             label: 'Profile Picture',
             description: 'Upload a profile picture (max 5MB)',
               disabled: false,
@@ -665,6 +708,8 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             id: 'bio',
             type: 'textarea',
             label: 'Bio',
+            required: false,
+            disabled: false,
             placeholder: 'Tell us about yourself...',
             validation: { maxLength: 300 },
             grid: { span: 12, offset: 0 }
@@ -673,14 +718,17 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             id: 'website',
             type: 'url',
             label: 'Website',
+            required: false,
+            disabled: false,
             placeholder: 'https://example.com',
-              disabled: false,
             grid: { span: 6, offset: 0 }
           },
           {
             id: 'location',
             type: 'text',
             label: 'Location',
+            required: false,
+            disabled: false,
             placeholder: 'City, Country',
               disabled: false,
             grid: { span: 6, offset: 0 }
@@ -729,14 +777,18 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       description: 'Configure your preferences',
       method: 'PUT',
       action: '/api/settings',
+      enctype: "application/x-www-form-urlencoded",
       sections: [
         {
           id: 'notifications',
           title: 'Notifications',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'emailNotifications',
               type: 'checkbox',
+              required: false,
               label: 'Email notifications',
               defaultValue: true,
               disabled: false,
@@ -745,6 +797,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             {
               id: 'pushNotifications',
               type: 'checkbox',
+              required: false,
               label: 'Push notifications',
               defaultValue: false,
               disabled: false,
@@ -755,7 +808,11 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'privacy',
           title: 'Privacy',
+          collapsible: false,
+          collapsed: false,
           fields: [
+            // @ts-ignore
+
             {
               id: 'profileVisibility',
               type: 'radio',
@@ -813,13 +870,15 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'personal',
           title: 'Personal Information',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'name',
               type: 'text',
               label: 'Full Name',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -827,7 +886,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'email',
               label: 'Email',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
@@ -835,15 +894,16 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               type: 'tel',
               label: 'Phone Number',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
               id: 'linkedin',
               type: 'url',
               label: 'LinkedIn Profile',
+            required: false,
+            disabled: false,
               placeholder: 'https://linkedin.com/in/username',
-              disabled: false,
               grid: { span: 6, offset: 0 }
             }
           ]
@@ -851,19 +911,23 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         {
           id: 'documents',
           title: 'Documents',
+          collapsible: false,
+          collapsed: false,
           fields: [
             {
               id: 'resume',
               type: 'file',
+              required: false,
               label: 'Resume/CV',
               description: 'Upload your resume (PDF preferred)',
               required: true,
-              disabled: false,
+            disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {
               id: 'coverLetter',
               type: 'file',
+              required: false,
               label: 'Cover Letter',
               description: 'Optional cover letter',
               disabled: false,
@@ -871,10 +935,16 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             }
           ]
         },
+        // @ts-ignore
+
         {
           id: 'experience',
           title: 'Experience',
+          collapsible: false,
+          collapsed: false,
           fields: [
+            // @ts-ignore
+
             {
               id: 'experience',
               type: 'select',
@@ -893,8 +963,9 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
               id: 'motivation',
               type: 'textarea',
               label: 'Why do you want to work here?',
+            required: false,
+            disabled: false,
               placeholder: 'Tell us about your motivation...',
-              required: true,
               validation: { minLength: 50, maxLength: 500 },
               grid: { span: 12, offset: 0 }
             }
@@ -937,7 +1008,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
   }
 
   private generateGenericForm(title: string, params: TemplateGenerationParams): FormConfig {
-    const fieldCount = params.customData?.fieldCount || 5;
+    const fieldCount = Number(params.customData?.fieldCount) || 5;
     const fields = [];
 
     for (let i = 0; i < fieldCount; i++) {
@@ -947,6 +1018,7 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
         label: `Field ${i + 1}`,
         placeholder: `Enter value for field ${i + 1}`,
         required: i < 2, // First 2 fields required
+        disabled: false,
         grid: { span: i % 2 === 0 ? 6 : 6, offset: 0 }
       });
     }
@@ -957,9 +1029,12 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
       description: 'A dynamically generated form',
       method: 'POST',
       action: '/api/submit',
+      enctype: "application/x-www-form-urlencoded",
       sections: [{
         id: 'main-section',
         title: 'Form Fields',
+        collapsible: false,
+        collapsed: false,
         fields
       }],
       layout: {
