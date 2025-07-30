@@ -1,6 +1,6 @@
-# AG UI Chatbot: Bedrock, Google, OpenAI, Groq Support
+# MCP-Powered UI Template Chatbot
 
-A comprehensive chatbot application that generates dynamic UI templates using Model Context Protocol (MCP). You can run this project locally with Google Gemini, OpenAI, or Groq models, or deploy it with Amazon Bedrock for enterprise-grade infrastructure.
+A sophisticated chatbot application that generates dynamic UI templates using the Model Context Protocol (MCP) and Large Language Models. This project demonstrates best practices for integrating MCP servers with AI applications, providing a seamless experience for creating complex UI components through natural language interaction.
 
 ---
 
