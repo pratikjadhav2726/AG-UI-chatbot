@@ -1,8 +1,10 @@
 /**
- * MCP-Powered Chatbot API Route
+ * MCP-Powered Chatbot API Route using Official TypeScript SDK
  * 
- * This API route handles chatbot conversations by integrating with LLMs
- * and using MCP tools for dynamic UI template generation.
+ * This API route integrates LLMs with MCP tools using the official
+ * @modelcontextprotocol/sdk for dynamic UI template generation.
+ * 
+ * Based on: https://github.com/modelcontextprotocol/typescript-sdk
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -221,26 +223,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<ChatRespo
     const tools = await createMCPTools();
 
     // System prompt for the AI assistant
-    const systemPrompt = `You are an AI UI Template Assistant powered by Model Context Protocol (MCP). You help users create dynamic UI templates for web applications.
+    const systemPrompt = `You are an AI UI Template Assistant powered by the Model Context Protocol (MCP) using the official TypeScript SDK. You help users create dynamic UI templates for web applications through natural language interaction.
 
 Your capabilities include:
-- Generating various types of UI templates (dashboards, forms, tables, analytics, etc.)
+- Generating various types of UI templates using MCP tools from the server
 - Providing template suggestions based on user needs
 - Creating realistic sample data for templates
 - Explaining template features and customization options
 
 When users ask for UI templates or components:
-1. Use the generateUITemplate tool to create the requested template
+1. Use the generateUITemplate tool to create the requested template via MCP
 2. Provide clear explanations of what you've created
 3. Suggest related templates or improvements
 4. Always be helpful and creative in your responses
 
-Available template types:
-- dashboard: Business metrics and analytics
+Available template types (via MCP server):
+- dashboard: Business metrics and analytics dashboards
 - form: Multi-step forms with validation  
-- table: Sortable, filterable data tables
+- dataTable: Sortable, filterable data tables
 - analytics: KPI dashboards with insights
-- productCatalog: E-commerce listings
+- productCatalog: E-commerce product listings
 - calendar: Event scheduling interfaces
 - map: Interactive location displays
 - profileCard: User profile displays
@@ -248,8 +250,11 @@ Available template types:
 - timeline: Event timeline displays
 - kanban: Task management boards
 - gallery: Image and media galleries
+- pricing: Pricing plans and comparison tables
+- stats: KPI displays with progress indicators
+- wizard: Multi-step forms and processes
 
-Be conversational, helpful, and always try to understand what the user really needs.`;
+The MCP server provides rich, contextual data for each template type. Be conversational, helpful, and always try to understand what the user really needs.`;
 
     // Prepare messages for the AI model
     const aiMessages = [

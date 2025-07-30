@@ -1,9 +1,11 @@
 /**
- * MCP Client Service for Dynamic UI Template Generation
+ * MCP Client Service using Official TypeScript SDK
  * 
- * This service manages the connection to the mcp-ui-server-v2 and provides
- * a clean interface for the chatbot to interact with MCP tools for generating
- * dynamic UI templates.
+ * This service uses the official @modelcontextprotocol/sdk to manage
+ * connections and interactions with the mcp-ui-server-v2 for dynamic
+ * UI template generation.
+ * 
+ * Based on: https://github.com/modelcontextprotocol/typescript-sdk
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -11,7 +13,6 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type {
   Tool,
-  ToolCall,
   Resource,
   Prompt,
   CallToolResult,
@@ -19,7 +20,9 @@ import type {
   ListResourcesResult,
   ListPromptsResult,
   ReadResourceResult,
-  GetPromptResult
+  GetPromptResult,
+  ClientCapabilities,
+  ServerCapabilities
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Types for our MCP integration
@@ -78,22 +81,30 @@ export class MCPClientService {
   }
 
   /**
-   * Initialize and connect to the MCP server
+   * Initialize and connect to the MCP server using official SDK patterns
    */
   async connect(): Promise<void> {
     try {
-      this.client = new Client({
-        name: this.config.name,
-        version: this.config.version
-      }, {
-        capabilities: {
-          tools: {},
-          resources: {},
-          prompts: {},
-          sampling: {}
-        }
-      });
+      // Define client capabilities following SDK patterns
+      const clientCapabilities: ClientCapabilities = {
+        tools: {},
+        resources: {},
+        prompts: {},
+        sampling: {}
+      };
 
+      // Create client with proper configuration
+      this.client = new Client(
+        {
+          name: this.config.name,
+          version: this.config.version
+        },
+        {
+          capabilities: clientCapabilities
+        }
+      );
+
+      // Create transport based on configuration
       let transport;
       
       if (this.config.transport.type === 'stdio') {
@@ -101,7 +112,7 @@ export class MCPClientService {
         transport = new StdioClientTransport({
           command: stdioConfig.command,
           args: stdioConfig.args || [],
-          env: stdioConfig.env
+          env: stdioConfig.env || {}
         });
       } else {
         const httpConfig = this.config.transport.config as HttpTransportConfig;
@@ -110,14 +121,15 @@ export class MCPClientService {
         );
       }
 
+      // Connect using the official SDK method
       await this.client.connect(transport);
       this.isConnected = true;
       this.connectionRetries = 0;
 
-      // Load available tools, resources, and prompts
+      // Load server capabilities
       await this.loadCapabilities();
 
-      console.log('MCP Client connected successfully');
+      console.log('MCP Client connected successfully using official SDK');
     } catch (error) {
       console.error('Failed to connect to MCP server:', error);
       this.isConnected = false;
@@ -153,7 +165,7 @@ export class MCPClientService {
   }
 
   /**
-   * Load available capabilities from the server
+   * Load server capabilities using official SDK methods
    */
   private async loadCapabilities(): Promise<void> {
     if (!this.client) {
@@ -161,19 +173,18 @@ export class MCPClientService {
     }
 
     try {
-      // Load tools
-      const toolsResult = await this.client.listTools();
+      // Use official SDK methods to load capabilities
+      const [toolsResult, resourcesResult, promptsResult] = await Promise.all([
+        this.client.listTools(),
+        this.client.listResources(),
+        this.client.listPrompts()
+      ]);
+
       this.availableTools = toolsResult.tools || [];
-
-      // Load resources
-      const resourcesResult = await this.client.listResources();
       this.availableResources = resourcesResult.resources || [];
-
-      // Load prompts
-      const promptsResult = await this.client.listPrompts();
       this.availablePrompts = promptsResult.prompts || [];
 
-      console.log(`Loaded MCP capabilities: ${this.availableTools.length} tools, ${this.availableResources.length} resources, ${this.availablePrompts.length} prompts`);
+      console.log(`Loaded MCP capabilities using SDK: ${this.availableTools.length} tools, ${this.availableResources.length} resources, ${this.availablePrompts.length} prompts`);
     } catch (error) {
       console.error('Failed to load MCP capabilities:', error);
       throw error;
@@ -202,7 +213,7 @@ export class MCPClientService {
   }
 
   /**
-   * Generate a UI template using MCP tools
+   * Generate a UI template using MCP tools via official SDK
    */
   async generateTemplate(templateType: string, requirements: any): Promise<MCPToolResult> {
     if (!this.client) {
@@ -210,28 +221,41 @@ export class MCPClientService {
     }
 
     try {
-      // Find the appropriate tool for template generation
+      // Find the appropriate tool for template generation from available tools
       const generateTool = this.availableTools.find(tool => 
         tool.name === 'generateTemplate' || 
         tool.name === 'generate_template' ||
-        tool.name.includes('generate')
+        tool.name === 'generate_ui_template' ||
+        tool.name.toLowerCase().includes('generate')
       );
 
       if (!generateTool) {
+        // Log available tools for debugging
+        console.log('Available MCP tools:', this.availableTools.map(t => t.name));
         throw new Error('Template generation tool not found in MCP server');
       }
 
-      // Call the template generation tool
+      console.log(`Using MCP tool: ${generateTool.name} for template generation`);
+
+      // Use official SDK callTool method
       const result = await this.client.callTool({
         name: generateTool.name,
         arguments: {
           templateType,
-          requirements,
-          format: 'json'
+          title: requirements.title || `${templateType} Template`,
+          description: requirements.description || `Generated ${templateType} template`,
+          useCase: requirements.useCase,
+          theme: requirements.theme || 'system',
+          primaryColor: requirements.primaryColor,
+          fullScreen: requirements.fullScreen || false,
+          customData: requirements.customData ? JSON.stringify(requirements.customData) : undefined,
+          images: requirements.images ? JSON.stringify(requirements.images) : undefined,
+          textContent: requirements.textContent ? JSON.stringify(requirements.textContent) : undefined,
+          brandingConfig: requirements.brandingConfig ? JSON.stringify(requirements.brandingConfig) : undefined
         }
       });
 
-      // Parse the result
+      // Handle the result according to SDK response format
       if (result.content && result.content.length > 0) {
         const content = result.content[0];
         
@@ -243,13 +267,14 @@ export class MCPClientService {
               template: {
                 id: `template_${Date.now()}`,
                 type: templateType,
-                title: templateData.title || `${templateType} Template`,
-                description: templateData.description || `Generated ${templateType} template`,
+                title: templateData.title || requirements.title || `${templateType} Template`,
+                description: templateData.description || requirements.description || `Generated ${templateType} template`,
                 data: templateData,
                 metadata: {
                   category: templateData.category || 'general',
                   complexity: templateData.complexity || 'medium',
-                  tags: templateData.tags || [templateType]
+                  tags: templateData.tags || [templateType],
+                  toolUsed: generateTool.name
                 }
               }
             };
@@ -257,7 +282,8 @@ export class MCPClientService {
             console.error('Failed to parse template data:', parseError);
             return {
               success: false,
-              error: 'Failed to parse generated template data'
+              error: 'Failed to parse generated template data',
+              data: content.text // Include raw response for debugging
             };
           }
         }
@@ -265,7 +291,8 @@ export class MCPClientService {
 
       return {
         success: false,
-        error: 'No valid content returned from template generation tool'
+        error: 'No valid content returned from template generation tool',
+        data: result
       };
     } catch (error) {
       console.error('Template generation failed:', error);

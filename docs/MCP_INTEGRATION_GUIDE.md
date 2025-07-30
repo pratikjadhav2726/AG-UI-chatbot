@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project integrates a sophisticated chatbot with the Model Context Protocol (MCP) to generate dynamic UI templates using Large Language Models (LLMs). The integration follows best software engineering practices and uses the official MCP TypeScript SDK.
+This project integrates a sophisticated chatbot with the Model Context Protocol (MCP) to generate dynamic UI templates using Large Language Models (LLMs). The integration follows best software engineering practices and uses the **official MCP TypeScript SDK** from https://github.com/modelcontextprotocol/typescript-sdk.
 
 ## Architecture
 
@@ -20,10 +20,19 @@ This project integrates a sophisticated chatbot with the Model Context Protocol 
 ### Components
 
 1. **MCP Server (mcp-ui-server-v2)**: Generates dynamic UI templates with realistic data
-2. **MCP Client Service**: Manages connection and communication with the MCP server
+2. **MCP Client Service**: Uses the official `@modelcontextprotocol/sdk` for connection and communication
 3. **Chatbot API**: Integrates LLM with MCP tools for natural language interaction
 4. **React Hooks**: Provides clean interface for UI components
 5. **Management Scripts**: Handle MCP server lifecycle
+
+### Official SDK Integration
+
+This project leverages the **official MCP TypeScript SDK** for all MCP operations:
+
+- **Client Creation**: `import { Client } from '@modelcontextprotocol/sdk/client/index.js'`
+- **Transport Management**: Using `StdioClientTransport` and `StreamableHTTPClientTransport`
+- **Type Safety**: Full TypeScript types from `@modelcontextprotocol/sdk/types.js`
+- **Best Practices**: Following official SDK patterns and examples
 
 ## Setup Instructions
 
@@ -155,15 +164,16 @@ Lists all available template types with descriptions and use cases.
 
 ## API Reference
 
-### MCP Client Service
+### MCP Client Service (Using Official SDK)
 
 ```typescript
 import { getMCPClient, initializeMCPClient } from '@/lib/mcp-client';
+// This uses the official @modelcontextprotocol/sdk under the hood
 
-// Initialize client
+// Initialize client with official SDK
 const client = await initializeMCPClient();
 
-// Generate template
+// Generate template using MCP tools
 const result = await client.generateTemplate('dashboard', {
   title: 'Sales Dashboard',
   description: 'Monthly sales performance',
@@ -171,6 +181,35 @@ const result = await client.generateTemplate('dashboard', {
     complexity: 'medium',
     features: ['charts', 'metrics', 'filters']
   }
+});
+```
+
+### Direct SDK Usage
+
+For advanced use cases, you can use the official SDK directly:
+
+```typescript
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+
+// Create client with official SDK
+const client = new Client(
+  { name: 'my-client', version: '1.0.0' },
+  { capabilities: { tools: {}, resources: {}, prompts: {} } }
+);
+
+// Create transport
+const transport = new StdioClientTransport({
+  command: 'node',
+  args: ['mcp-ui-server-v2/dist/index.js']
+});
+
+// Connect and use
+await client.connect(transport);
+const tools = await client.listTools();
+const result = await client.callTool({
+  name: 'generate_ui_template',
+  arguments: { templateType: 'dashboard' }
 });
 ```
 

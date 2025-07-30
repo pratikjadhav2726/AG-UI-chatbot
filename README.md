@@ -1,6 +1,6 @@
 # MCP-Powered UI Template Chatbot
 
-A sophisticated chatbot application that generates dynamic UI templates using the Model Context Protocol (MCP) and Large Language Models. This project demonstrates best practices for integrating MCP servers with AI applications, providing a seamless experience for creating complex UI components through natural language interaction.
+A sophisticated chatbot application that generates dynamic UI templates using the **official Model Context Protocol (MCP) TypeScript SDK** and Large Language Models. This project demonstrates best practices for integrating MCP servers with AI applications using the official SDK from https://github.com/modelcontextprotocol/typescript-sdk, providing a seamless experience for creating complex UI components through natural language interaction.
 
 ---
 
