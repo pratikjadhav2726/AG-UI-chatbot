@@ -316,9 +316,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'datetime',
-            options: { relative: true },
-          hidden: false
-        },
+            options: { relative: true }
+          },
           align: "left",
           hidden: false
         },
@@ -1136,9 +1135,8 @@ export class DataTableGenerator implements TemplateGenerator<DataTableConfig> {
           filterable: true,
           format: {
             type: 'datetime',
-            options: { relative: true },
-          hidden: false
-        },
+            options: { relative: true }
+          },
           align: "left",
           hidden: false
         }

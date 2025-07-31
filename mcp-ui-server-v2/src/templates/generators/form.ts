@@ -730,7 +730,6 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             required: false,
             disabled: false,
             placeholder: 'City, Country',
-              disabled: false,
             grid: { span: 6, offset: 0 }
           }
         ]
@@ -917,11 +916,10 @@ export class FormGenerator implements TemplateGenerator<FormConfig> {
             {
               id: 'resume',
               type: 'file',
-              required: false,
+              required: true,
               label: 'Resume/CV',
               description: 'Upload your resume (PDF preferred)',
-              required: true,
-            disabled: false,
+              disabled: false,
               grid: { span: 6, offset: 0 }
             },
             {

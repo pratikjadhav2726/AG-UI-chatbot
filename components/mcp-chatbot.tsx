@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DynamicTemplate } from "@/components/dynamic-template"
+import { useMCP } from "@/hooks/use-mcp"
 import { 
   Send, 
   Bot, 
@@ -44,6 +45,9 @@ interface MCPChatbotProps {
 }
 
 export function MCPChatbot({ onTemplateGenerated }: MCPChatbotProps) {
+  // MCP integration
+  const { isConnected, isLoading: mcpLoading, error: mcpError, status, clearError } = useMCP();
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -222,17 +226,43 @@ Let's build something amazing together! ✨`,
             <div className="p-2 bg-primary/10 rounded-lg">
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
-            <div>
+            <div className="flex-1">
               <CardTitle className="flex items-center gap-2">
                 MCP UI Template Assistant
                 <Badge variant="secondary" className="text-xs">
                   Powered by Claude 4 Sonnet, Google Gemini, Groq and OpenAI
                 </Badge>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="flex items-center gap-2">
                 Generate dynamic UI templates using our MCP server
+                {/* MCP Status Indicator */}
+                <div className="flex items-center gap-1 ml-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                  <span className="text-xs">
+                    MCP {isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                </div>
               </CardDescription>
             </div>
+            
+            {/* MCP Error Alert */}
+            {mcpError && (
+              <Alert className="mt-2 border-yellow-200 bg-yellow-50">
+                <AlertDescription className="text-xs flex items-center gap-2">
+                  <span>⚠️ MCP Issue: {mcpError}</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={clearError}
+                    className="h-6 px-2 text-xs"
+                  >
+                    Dismiss
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </CardHeader>
       </Card>
