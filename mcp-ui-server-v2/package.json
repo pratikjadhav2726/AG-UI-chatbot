@@ -1,0 +1,76 @@
+{
+  "name": "@dynamic-templates/mcp-server",
+  "version": "2.0.0",
+  "description": "Production-ready MCP server for dynamic UI template generation with comprehensive template support",
+  "main": "dist/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "build": "tsc && npm run copy-resources",
+    "start": "node dist/index.js",
+    "clean": "rimraf dist",
+    "copy-resources": "cp -r src/resources dist/ 2>/dev/null || true",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "prepare": "npm run build",
+    "debug": "tsx --inspect src/index.ts"
+  },
+  "bin": {
+    "dynamic-templates-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "dynamic-ui",
+    "templates",
+    "ai-tools",
+    "react-components",
+    "shadcn",
+    "typescript"
+  ],
+  "author": "Dynamic Templates Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.23.8",
+    "uuid": "^10.0.0",
+    "date-fns": "^3.6.0",
+    "lodash": "^4.17.21",
+    "node-cache": "^5.1.2",
+    "pino": "^8.19.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/lodash": "^4.17.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0",
+    "@vitest/coverage-v8": "^1.4.0",
+    "rimraf": "^5.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/dynamic-templates-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/dynamic-templates-mcp/issues"
+  },
+  "homepage": "https://github.com/your-org/dynamic-templates-mcp#readme"
+}
