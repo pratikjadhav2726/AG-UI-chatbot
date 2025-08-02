@@ -1,0 +1,4 @@
+[STDERR] 🚀 Starting Dynamic Templates MCP Server v2.0...
+[STDERR] ✅ MCP Server connected and ready!
+📋 Available tools: generate_template, list_template_types, get_template_suggestions
+🎨 Template types: 20 available

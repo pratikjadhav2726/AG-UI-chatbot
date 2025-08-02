@@ -2,15 +2,15 @@
   "name": "@dynamic-templates/mcp-server",
   "version": "2.0.0",
   "description": "Production-ready MCP server for dynamic UI template generation with comprehensive template support",
-  "main": "dist/index.js",
+  "main": "dist/simple-server.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "dev": "tsx watch --clear-screen=false src/simple-server.ts",
     "build": "tsc && npm run copy-resources",
-    "start": "node dist/index.js",
+    "start": "node dist/simple-server.js",
     "clean": "rimraf dist",
     "copy-resources": "cp -r src/resources dist/ 2>/dev/null || true",
     "test": "vitest",
@@ -23,7 +23,7 @@
     "debug": "tsx --inspect src/index.ts"
   },
   "bin": {
-    "dynamic-templates-mcp": "dist/index.js"
+    "dynamic-templates-mcp": "dist/simple-server.js"
   },
   "files": [
     "dist",
@@ -43,7 +43,7 @@
   "author": "Dynamic Templates Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.17.0",
     "zod": "^3.23.8",
     "uuid": "^10.0.0",
     "date-fns": "^3.6.0",

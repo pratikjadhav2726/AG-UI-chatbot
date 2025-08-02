@@ -256,7 +256,7 @@ export class MCPClientService {
       });
 
       // Handle the result according to SDK response format
-      if (result.content && result.content.length > 0) {
+      if (result.content && Array.isArray(result.content) && result.content.length > 0) {
         const content = result.content[0];
         
         if (content.type === 'text') {
@@ -273,8 +273,7 @@ export class MCPClientService {
                 metadata: {
                   category: templateData.category || 'general',
                   complexity: templateData.complexity || 'medium',
-                  tags: templateData.tags || [templateType],
-                  toolUsed: generateTool.name
+                  tags: templateData.tags || [templateType]
                 }
               }
             };
@@ -331,7 +330,7 @@ export class MCPClientService {
         }
       });
 
-      if (result.content && result.content.length > 0) {
+      if (result.content && Array.isArray(result.content) && result.content.length > 0) {
         const content = result.content[0];
         if (content.type === 'text') {
           try {
@@ -389,10 +388,11 @@ export class MCPClientService {
     }
 
     try {
-      return await this.client.callTool({
+      const result = await this.client.callTool({
         name: toolName,
         arguments: arguments_
       });
+      return result as any;
     } catch (error) {
       console.error(`Failed to call tool ${toolName}:`, error);
       throw error;
