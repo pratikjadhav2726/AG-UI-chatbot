@@ -264,7 +264,7 @@ The MCP server provides rich, contextual data for each template type. Be convers
 
     // Generate response using AI SDK
     const result = await generateText({
-      model,
+      model: model as any,
       messages: aiMessages,
       tools,
       maxTokens: 2000,

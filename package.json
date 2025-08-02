@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run mcp:start && next dev",
+    "dev": "next dev",
+    "dev:with-mcp": "npm run mcp:start && next dev",
     "build": "npm run mcp:build && next build",
+    "build:web-only": "next build",
     "start": "npm run mcp:start && next start",
+    "start:web-only": "next start",
     "lint": "next lint",
     "test-bedrock": "node test-bedrock.mjs",
     "mcp:build": "cd mcp-ui-server-v2 && npm install && npm run build",

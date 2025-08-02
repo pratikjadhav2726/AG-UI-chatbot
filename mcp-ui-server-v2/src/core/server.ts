@@ -3,18 +3,8 @@
  * Follows MCP specification v2024-11-05 with comprehensive features
  */
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  ListToolsRequestSchema,
-  CallToolRequestSchema,
-  ListResourcesRequestSchema,
-  ReadResourceRequestSchema,
-  SubscribeRequestSchema,
-  UnsubscribeRequestSchema,
-  ListPromptsRequestSchema,
-  GetPromptRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
 import type {
   ServerConfig,
   ServerCapabilities,
@@ -33,9 +23,13 @@ import { ToolManager } from '../tools/manager.js';
 import { ResourceManager } from '../resources/manager.js';
 import { PromptManager } from '../prompts/manager.js';
 import { ValidationError, MCPError, ProtocolError } from '../utils/errors.js';
+import { z } from 'zod';
 
+/**
+ * Production-ready MCP Server with comprehensive features
+ */
 export class MCPServer {
-  private server: Server;
+  private server: McpServer;
   private config: ServerConfig;
   private logger = getLogger();
   private cache = getCache();
@@ -48,378 +42,242 @@ export class MCPServer {
   constructor(config: ServerConfig) {
     this.config = config;
     
-    // Initialize server with capabilities
-    this.server = new Server(
-      {
-        name: config.name,
-        version: config.version,
-      },
-      {
-        capabilities: config.capabilities as any,
-      }
-    );
+    // Initialize server with new API
+    this.server = new McpServer({
+      name: config.name,
+      version: config.version,
+    });
 
     // Initialize managers
     this.toolManager = new ToolManager();
     this.resourceManager = new ResourceManager();
     this.promptManager = new PromptManager();
 
-    this.setupHandlers();
     this.setupErrorHandling();
   }
 
   /**
-   * Set up all MCP protocol handlers
+   * Set up all MCP protocol handlers using the new register* API
    */
-  private setupHandlers(): void {
-    this.setupToolHandlers();
-    this.setupResourceHandlers();
-    this.setupPromptHandlers();
-    this.setupConnectionHandlers();
+  private async setupHandlers(): Promise<void> {
+    await this.setupToolHandlers();
+    await this.setupResourceHandlers();
+    await this.setupPromptHandlers();
   }
 
   /**
    * Set up tool-related handlers
    */
-  private setupToolHandlers(): void {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      try {
-        const startTime = Date.now();
-        const tools = await this.toolManager.listTools();
-        const duration = Date.now() - startTime;
-        
-        this.logger.performance('tools/list', duration, { toolCount: tools.length });
-        
-        return { tools };
-      } catch (error) {
-        this.logger.error('Failed to list tools', error);
-        throw new MCPError(-32603, 'Internal error listing tools');
-      }
-    });
-
-    // Call a tool
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const startTime = Date.now();
-      let toolName = 'unknown';
-      
-      try {
-        const { name, arguments: args } = request.params as ToolCall;
-        toolName = name;
-        
-        this.logger.toolCall(name, args || {});
-        
-        // Check cache first
-        const cacheKey = this.cache.generateKey(`tool:${name}`, args || {});
-        const cached = this.cache.get<ToolResult>(cacheKey);
-        
-        if (cached) {
-          const duration = Date.now() - startTime;
-          this.logger.toolResult(name, true, duration);
-          return cached;
+  private async setupToolHandlers(): Promise<void> {
+    // Initialize the tool manager first
+    await this.toolManager.initialize();
+    
+    // Get all tools from the tool manager
+    const tools = await this.toolManager.listTools();
+    
+    for (const tool of tools) {
+      this.server.registerTool(
+        tool.name,
+        {
+          description: tool.description || `Tool: ${tool.name}`,
+          inputSchema: tool.inputSchema as any,
+        },
+        async (args: any) => {
+          try {
+            const startTime = Date.now();
+            const result = await this.toolManager.callTool(tool.name, args);
+            const duration = Date.now() - startTime;
+            
+            this.logger.performance(`tools/${tool.name}`, duration, { 
+              toolName: tool.name,
+              success: !result.isError 
+            });
+            
+            return result;
+          } catch (error) {
+            this.logger.error(`Tool execution failed: ${tool.name}`, error);
+            throw new MCPError(-32603, 'Internal error executing tool');
+          }
         }
-
-        // Execute tool
-        const result = await this.toolManager.callTool(name, args || {});
-        const duration = Date.now() - startTime;
-        
-        // Cache successful results
-        if (!result.isError) {
-          this.cache.set(cacheKey, result, 300); // 5 minute cache
-        }
-        
-        this.logger.toolResult(name, !result.isError, duration, result.isError ? new Error('Tool execution failed') : undefined);
-        
-        return result as any;
-      } catch (error) {
-        const duration = Date.now() - startTime;
-        this.logger.toolResult(toolName, false, duration, error as Error);
-        
-        if (error instanceof ValidationError) {
-          throw new MCPError(-32602, `Invalid parameters: ${error.message}`);
-        }
-        
-        this.logger.error(`Tool execution failed: ${toolName}`, error);
-        throw new MCPError(-32603, 'Internal error executing tool');
-      }
-    });
+      );
+    }
   }
 
   /**
    * Set up resource-related handlers
    */
-  private setupResourceHandlers(): void {
-    // List available resources
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
-      try {
-        const startTime = Date.now();
-        const resources = await this.resourceManager.listResources();
-        const duration = Date.now() - startTime;
-        
-        this.logger.performance('resources/list', duration, { resourceCount: resources.length });
-        
-        return { resources };
-      } catch (error) {
-        this.logger.error('Failed to list resources', error);
-        throw new MCPError(-32603, 'Internal error listing resources');
-      }
-    });
-
-    // Read a resource
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      try {
-        const { uri } = request.params as { uri: string };
-        
-        // Check cache first
-        const cached = this.cache.getCachedResource<ResourceContents>(uri);
-        if (cached) {
-          this.logger.resourceAccess(uri, true, true);
-          return cached;
+  private async setupResourceHandlers(): Promise<void> {
+    // Initialize the resource manager first
+    await this.resourceManager.initialize();
+    
+    // Get all resources from the resource manager
+    const resources = await this.resourceManager.listResources();
+    
+    for (const resource of resources) {
+      this.server.registerResource(
+        resource.name,
+        resource.uri,
+        {
+          description: resource.description || `Resource: ${resource.name}`,
+          mimeType: resource.mimeType,
+        },
+        async (resourceUri) => {
+          try {
+            const startTime = Date.now();
+            const result = await this.resourceManager.readResource(resourceUri.href);
+            const duration = Date.now() - startTime;
+            
+            this.logger.performance(`resources/${resource.name}`, duration, { 
+              resourceName: resource.name,
+              uri: resourceUri.href 
+            });
+            
+            // Convert ResourceContents to the expected format
+            return {
+              contents: result.contents || []
+            };
+          } catch (error) {
+            this.logger.error(`Resource read failed: ${resource.name}`, error);
+            throw new MCPError(-32603, 'Internal error reading resource');
+          }
         }
-
-        const content = await this.resourceManager.readResource(uri);
-        
-        // Cache the result
-        this.cache.cacheResource(uri, content, 600); // 10 minute cache
-        
-        this.logger.resourceAccess(uri, true, false);
-        return content as any;
-      } catch (error) {
-        this.logger.error(`Failed to read resource: ${request.params?.uri}`, error);
-        throw new MCPError(-32603, 'Internal error reading resource');
-      }
-    });
-
-    // Subscribe to resource changes (if supported)
-    if (this.config.capabilities.resources?.subscribe) {
-      this.server.setRequestHandler('resources/subscribe' as any, async (request: any) => {
-        try {
-          const { uri } = request.params as { uri: string };
-          await this.resourceManager.subscribe(uri);
-          this.logger.info('Resource subscription created', { uri });
-          return {};
-        } catch (error) {
-          this.logger.error(`Failed to subscribe to resource: ${request.params?.uri}`, error);
-          throw new MCPError(-32603, 'Internal error subscribing to resource');
-        }
-      });
-
-      this.server.setRequestHandler('resources/unsubscribe' as any, async (request: any) => {
-        try {
-          const { uri } = request.params as { uri: string };
-          await this.resourceManager.unsubscribe(uri);
-          this.logger.info('Resource subscription removed', { uri });
-          return {};
-        } catch (error) {
-          this.logger.error(`Failed to unsubscribe from resource: ${request.params?.uri}`, error);
-          throw new MCPError(-32603, 'Internal error unsubscribing from resource');
-        }
-      });
+      );
     }
   }
 
   /**
    * Set up prompt-related handlers
    */
-  private setupPromptHandlers(): void {
-    // List available prompts
-    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
-      try {
-        const startTime = Date.now();
-        const prompts = await this.promptManager.listPrompts();
-        const duration = Date.now() - startTime;
-        
-        this.logger.performance('prompts/list', duration, { promptCount: prompts.length });
-        
-        return { prompts };
-      } catch (error) {
-        this.logger.error('Failed to list prompts', error);
-        throw new MCPError(-32603, 'Internal error listing prompts');
-      }
-    });
-
-    // Get a prompt
-    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
-      try {
-        const { name, arguments: args } = request.params as { name: string; arguments?: Record<string, unknown> };
-        
-        const result = await this.promptManager.getPrompt(name, args || {});
-        
-        this.logger.promptGeneration(name, args || {});
-        
-        return result as any;
-      } catch (error) {
-        this.logger.error(`Failed to get prompt: ${request.params?.name}`, error);
-        throw new MCPError(-32603, 'Internal error getting prompt');
-      }
-    });
-  }
-
-  /**
-   * Set up connection and lifecycle handlers
-   */
-  private setupConnectionHandlers(): void {
-    // Handle ping requests
-    this.server.setRequestHandler('ping' as any, async () => {
-      return { status: 'pong', timestamp: new Date().toISOString() };
-    });
-
-    // Handle initialization
-    this.server.setRequestHandler('initialize' as any, async (request: any) => {
-      try {
-        const { protocolVersion, clientInfo, capabilities } = request.params as {
-          protocolVersion: string;
-          clientInfo: { name: string; version: string };
-          capabilities: any;
-        };
-
-        // Validate protocol version
-        if (protocolVersion !== '2024-11-05') {
-          throw new ProtocolError(`Unsupported protocol version: ${protocolVersion}`);
+  private async setupPromptHandlers(): Promise<void> {
+    // Initialize the prompt manager first
+    await this.promptManager.initialize();
+    
+    // Get all prompts from the prompt manager
+    const prompts = await this.promptManager.listPrompts();
+    
+    for (const prompt of prompts) {
+      this.server.registerPrompt(
+        prompt.name,
+        {
+          description: prompt.description || `Prompt: ${prompt.name}`,
+          argsSchema: prompt.arguments as any,
+        },
+        async (args: any) => {
+          try {
+            const startTime = Date.now();
+            const result = await this.promptManager.getPrompt(prompt.name, args);
+            const duration = Date.now() - startTime;
+            
+            this.logger.performance(`prompts/${prompt.name}`, duration, { 
+              promptName: prompt.name 
+            });
+            
+            return result;
+          } catch (error) {
+            this.logger.error(`Prompt execution failed: ${prompt.name}`, error);
+            throw new MCPError(-32603, 'Internal error executing prompt');
+          }
         }
-
-        // Store client connection info
-        const clientId = `${clientInfo.name}-${Date.now()}`;
-        this.clientConnections.set(clientId, {
-          id: clientId,
-          capabilities,
-          connectedAt: new Date(),
-        });
-
-        this.logger.connectionEvent('connect', clientId);
-        this.isInitialized = true;
-
-        return {
-          protocolVersion: '2024-11-05' as const,
-          capabilities: this.config.capabilities,
-          serverInfo: {
-            name: this.config.name,
-            version: this.config.version,
-          },
-        };
-      } catch (error) {
-        this.logger.error('Initialization failed', error);
-        throw new MCPError(-32603, 'Initialization failed');
-      }
-    });
+      );
+    }
   }
 
   /**
    * Set up error handling
    */
   private setupErrorHandling(): void {
+    // Handle uncaught errors
     process.on('uncaughtException', (error) => {
       this.logger.error('Uncaught exception', error);
-      this.shutdown();
+      process.exit(1);
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      this.logger.error('Unhandled rejection', reason);
-    });
-
-    process.on('SIGINT', () => {
-      this.logger.info('Received SIGINT, shutting down gracefully');
-      this.shutdown();
-    });
-
-    process.on('SIGTERM', () => {
-      this.logger.info('Received SIGTERM, shutting down gracefully');
-      this.shutdown();
+      this.logger.error('Unhandled rejection', { reason, promise });
     });
   }
 
-  /**
-   * Register tools, resources, and prompts
-   */
-  async registerComponents(): Promise<void> {
-    try {
-      // Register all tools
-      await this.toolManager.initialize();
-      
-      // Register all resources
-      await this.resourceManager.initialize();
-      
-      // Register all prompts
-      await this.promptManager.initialize();
-      
-      this.logger.info('All components registered successfully');
-    } catch (error) {
-      this.logger.error('Failed to register components', error);
-      throw error;
-    }
-  }
+
 
   /**
-   * Start the server
+   * Connect to a transport and start the server
    */
-  async start(): Promise<void> {
+  async connect(transport: StdioServerTransport): Promise<void> {
     try {
-      await this.registerComponents();
+      this.logger.info('Connecting MCP server to transport');
       
-      const transport = new StdioServerTransport();
+      // Set up handlers first
+      await this.setupHandlers();
+      
       await this.server.connect(transport);
+      this.isInitialized = true;
       
-      this.logger.info('MCP Server started successfully', {
+      const tools = await this.toolManager.listTools();
+      const resources = await this.resourceManager.listResources();
+      const prompts = await this.promptManager.listPrompts();
+      
+      this.logger.info('MCP server connected successfully', {
         name: this.config.name,
         version: this.config.version,
-        capabilities: this.config.capabilities,
+        toolCount: tools.length,
+        resourceCount: resources.length,
+        promptCount: prompts.length,
       });
       
     } catch (error) {
-      this.logger.error('Failed to start server', error);
+      this.logger.error('Failed to connect MCP server', error);
       throw error;
     }
   }
 
   /**
-   * Shutdown the server gracefully
+   * Close the server and cleanup resources
    */
-  async shutdown(): Promise<void> {
+  async close(): Promise<void> {
     try {
-      this.logger.info('Shutting down MCP server');
+      this.logger.info('Closing MCP server');
       
-      // Notify all connected clients about shutdown
-      for (const [clientId] of this.clientConnections) {
-        this.logger.connectionEvent('disconnect', clientId);
-      }
-      
-      // Clear cache
+      // Clear caches
       this.cache.clear();
       
-      // Close any open connections
-      await this.resourceManager.cleanup();
+      // Clear connections
+      this.clientConnections.clear();
       
-      this.logger.info('MCP server shutdown complete');
-      process.exit(0);
+      this.isInitialized = false;
+      this.logger.info('MCP server closed successfully');
+      
     } catch (error) {
-      this.logger.error('Error during shutdown', error);
-      process.exit(1);
+      this.logger.error('Error closing MCP server', error);
+      throw error;
     }
   }
 
   /**
-   * Get server status
+   * Get server statistics
    */
-  getStatus(): {
+  async getStats(): Promise<{
+    name: string;
+    version: string;
     isInitialized: boolean;
-    connections: number;
+    toolCount: number;
+    resourceCount: number;
+    promptCount: number;
+    connectionCount: number;
     uptime: number;
-    cacheStats: any;
-  } {
+  }> {
+    const tools = await this.toolManager.listTools();
+    const resources = await this.resourceManager.listResources();
+    const prompts = await this.promptManager.listPrompts();
+    
     return {
+      name: this.config.name,
+      version: this.config.version,
       isInitialized: this.isInitialized,
-      connections: this.clientConnections.size,
+      toolCount: tools.length,
+      resourceCount: resources.length,
+      promptCount: prompts.length,
+      connectionCount: this.clientConnections.size,
       uptime: process.uptime(),
-      cacheStats: this.cache.getStats(),
     };
-  }
-
-  /**
-   * Send notification to all connected clients
-   */
-  async notifyClients(method: string, params?: Record<string, unknown>): Promise<void> {
-    // Implementation would depend on transport type
-    // For stdio, notifications are not typically sent back to client
-    this.logger.debug('Client notification', { method, params });
   }
 }

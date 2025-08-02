@@ -15,6 +15,7 @@
 
 import 'dotenv/config';
 import { MCPServer } from './core/server.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createDefaultLogger, setDefaultLogger } from './core/logger.js';
 import { createDefaultCache, setDefaultCache } from './core/cache.js';
 import type { ServerConfig } from './types/mcp.js';
@@ -143,17 +144,18 @@ async function initialize(): Promise<MCPServer> {
 async function main(): Promise<void> {
   try {
     const server = await initialize();
-    await server.start();
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
     
     // Keep the process alive
     process.on('SIGINT', () => {
       console.error('\nReceived SIGINT, shutting down gracefully...');
-      server.shutdown();
+      server.close();
     });
     
     process.on('SIGTERM', () => {
       console.error('\nReceived SIGTERM, shutting down gracefully...');
-      server.shutdown();
+      server.close();
     });
     
   } catch (error) {

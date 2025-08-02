@@ -44,26 +44,23 @@ const mcpUITool = tool({
       const mcpClient = getMCPClient();
       
       // Call the MCP server to generate the template
-      const result = await mcpClient.callTool({
-        name: 'generate_ui_template',
-        arguments: {
-          templateType,
-          title,
-          description,
-          config,
-          useCase,
-          theme,
-          primaryColor,
-          fullScreen
-        }
+      const result = await mcpClient.callTool('generate_ui_template', {
+        templateType,
+        title,
+        description,
+        config,
+        useCase,
+        theme,
+        primaryColor,
+        fullScreen
       });
 
       if (result.isError) {
-        throw new Error(result.content[0]?.text || 'Unknown MCP error');
+        throw new Error(result.content?.[0]?.text || 'Unknown MCP error');
       }
 
       // Parse the template configuration from MCP response
-      const templateConfig = JSON.parse(result.content[0]?.text || '{}');
+      const templateConfig = JSON.parse(result.content?.[0]?.text || '{}');
       
       return {
         success: true,
