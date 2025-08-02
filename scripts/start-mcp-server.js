@@ -12,7 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Configuration
-const MCP_SERVER_PATH = path.join(__dirname, '..', 'mcp-ui-server-v2', 'dist', 'index.js');
+const MCP_SERVER_PATH = path.join(__dirname, '..', 'mcp-ui-server-v2', 'dist', 'simple-server.js');
 const PID_FILE = path.join(__dirname, '..', '.mcp-server.pid');
 const LOG_FILE = path.join(__dirname, '..', '.mcp-server.log');
 
@@ -78,19 +78,29 @@ function startServer() {
 
   log('Starting MCP server...', 'blue');
 
-  // Prepare log file
-  const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
-
-  // Start the MCP server process
+  // Start the MCP server process  
   const mcpServer = spawn('node', [MCP_SERVER_PATH], {
     detached: true,
-    stdio: ['ignore', logStream, logStream],
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
       LOG_LEVEL: 'info'
     }
   });
+
+  // Handle output logging
+  if (mcpServer.stdout) {
+    mcpServer.stdout.on('data', (data) => {
+      fs.appendFileSync(LOG_FILE, `[STDOUT] ${data}`);
+    });
+  }
+  
+  if (mcpServer.stderr) {
+    mcpServer.stderr.on('data', (data) => {
+      fs.appendFileSync(LOG_FILE, `[STDERR] ${data}`);
+    });
+  }
 
   // Handle server startup
   mcpServer.on('spawn', () => {
